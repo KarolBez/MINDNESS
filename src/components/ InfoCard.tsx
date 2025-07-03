@@ -1,22 +1,27 @@
 'use client'
-
+import { useState } from 'react'
 import Slideshow from './Slideshow'
 
 export default function InfoCard() {
+  const [text, setText] = useState(
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua'
+  )
+
   return (
-    <div className="card bg-white rounded-3xl shadow-lg p-8 relative overflow-hidden">
-      <div className="mb-6">
-        <h2 className="text-4xl font-bold text-[#9ACBF6]">Mindness</h2>
-        <p className="text-lg text-gray-700 mt-2">
-          Soluções em saúde emocional para empresas
-        </p>
-      </div>
+    <div className="card">
+      <h2>Mindness</h2>
+      <p> Soluções em saúde emocional para empresas</p> 
+      <Slideshow />
 
-      <div className="rounded-xl overflow-hidden">
-        <Slideshow />
-      </div>
-
-      <div className="circle absolute bottom-6 right-6 w-24 h-24 bg-green-300 rounded-full opacity-60" />
+      <a
+        href="https://wa.me/558881929593" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="circle whatsapp-button"
+        aria-label="Fale conosco no WhatsApp"
+      >
+        <img src="/whatsapp-icon.svg" alt="WhatsApp" />
+      </a>
     </div>
   )
 }

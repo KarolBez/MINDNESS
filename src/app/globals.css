@@ -47,13 +47,27 @@ body {
 }
 
 .circle {
-  width: 90px;
-  height: 90px;
-  background-color: #a4e4ba;
+  width: 60px;
+  height: 60px;
+  background-color: #25D366; 
   border-radius: 50%;
   position: absolute;
-  bottom: 0px;
+  bottom: 5px;
   right: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.circle:hover {
+  transform: scale(1.05);
+}
+
+.circle img {
+  width: 40px;
+  height: 40px;
 }
 
 .logo {
