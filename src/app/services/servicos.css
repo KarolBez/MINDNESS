@@ -1,0 +1,76 @@
+.servicos-container {
+  padding: 60px 20px;
+  background: linear-gradient(to bottom, #f0f6ff, #d9eaff);
+  min-height: 100vh;
+  text-align: center;
+}
+
+.titulo {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 50px;
+}
+
+.grid-servicos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+}
+
+.card-servico {
+  background-color: #fff;
+  border-radius: 20px;
+  padding: 30px 25px;
+  max-width: 300px;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+}
+
+.card-servico:hover {
+  transform: translateY(-8px);
+}
+
+.card-servico h2 {
+  font-size: 1.5rem;
+  color: #1f2d3d;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+.card-servico ul {
+  padding-left: 20px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+.icon-servico {
+  width: 50px;
+  height: 50px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.whatsapp-float {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background-color: #25D366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.whatsapp-float img {
+  width: 30px;
+  height: 30px;
+}
+

@@ -1,0 +1,37 @@
+.navbar {
+  background-color: white;
+  border-radius: 20px;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  max-width: 1000px;
+  margin: 30px auto;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #1f2d3d;
+  font-weight: 500;
+  font-size: 1.05rem;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #0077b6;
+  transform: scale(1.05);
+}
+
+.login-link {
+  background-color: #0077b6;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 12px;
+}
+
+.login-link:hover {
+  background-color: #005f91;
+}
