@@ -10,11 +10,11 @@ export default function InfoCard() {
   return (
     <div className="card">
       <h2>Mindness</h2>
-      <p> Soluções em saúde emocional para empresas</p> 
+      <p> </p> 
       <Slideshow />
 
       <a
-        href="https://wa.me/558881929593" 
+        href="https://wa.me/5588992347927" 
         target="_blank"
         rel="noopener noreferrer"
         className="circle whatsapp-button"

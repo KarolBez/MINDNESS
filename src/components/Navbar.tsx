@@ -8,11 +8,12 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link href="/" className={pathname === '/' ? 'nav-link active' : 'nav-link'}>Página 1</Link>
-      <Link href="/sobre" className={pathname === '/sobre' ? 'nav-link active' : 'nav-link'}>Sobre</Link>
-      <Link href="/services" className={pathname === '/services' ? 'nav-link active' : 'nav-link'}>Serviços</Link>
-      <Link href="/blog" className={pathname === '/blog' ? 'nav-link active' : 'nav-link'}>Nosso Blog</Link>
-      <Link href="/login" className={pathname === '/login' ? 'nav-link active login-link' : 'nav-link login-link'}>Login</Link>
+      <Link href="/" className="nav-link">Página Inicial</Link>
+      <Link href="/sobre" className="nav-link">Sobre</Link>
+      <Link href="/services" className="nav-link">Serviços</Link>
+      <Link href="/agendamento" className="nav-link agendamento-link">Agendamento</Link>
+      <Link href="/blog" className="nav-link">Nosso Blog</Link>
+      <Link href="/login" className="nav-link login-link">Login</Link>
     </nav>
   );
 }

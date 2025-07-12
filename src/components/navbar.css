@@ -20,6 +20,7 @@
   transition: color 0.3s ease, transform 0.2s ease;
 }
 
+
 .nav-link:hover {
   color: #0077b6;
   transform: scale(1.05);
@@ -34,4 +35,17 @@
 
 .login-link:hover {
   background-color: #005f91;
+}
+
+.agendamento-link {
+  border: 2px solid #0077b6;
+  padding: 8px 18px;
+  border-radius: 12px;
+  color: #0077b6;
+  font-weight: 600;
+}
+
+.agendamento-link:hover {
+  background-color: #e0f4ff;
+  transform: scale(1.05);
 }

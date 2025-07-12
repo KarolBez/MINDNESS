@@ -73,3 +73,20 @@ body {
 .logo {
   margin-right: auto;
 }
+
+.voltar-inicio-botao {
+  background-color: transparent;
+  border: 2px solid #90c8f0;
+  color: #1f2d3d;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 2rem;
+}
+
+.voltar-inicio-botao:hover {
+  background-color: #90c8f0;
+  color: white;
+}

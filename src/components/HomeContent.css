@@ -1,0 +1,161 @@
+/* Estilo base */
+.intro-section,
+.about-section,
+.benefits-section,
+.testimonials-section,
+.contact-map-section {
+  padding: 4rem 2rem;
+  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+  color: #1f2d3d;
+  background-color: #e5f2fd; /* azul claro da paleta */
+}
+
+/* Títulos */
+h1, h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #0077b6;
+}
+
+h1 .highlight {
+  color: #009be0;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Botão CTA */
+.cta-button {
+  display: inline-block;
+  margin-top: 2rem;
+  background-color: 	#a9d2f3; /* azul clarinho da paleta */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: #e6e6e6;
+}
+
+/* Benefícios */
+.benefits-section ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 2rem;
+}
+
+.benefits-section li {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Depoimentos */
+.testimonials-section {
+  background-color: #f8f9f8; /* branco gelo da paleta */
+}
+
+.testimonial-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 600px;
+  margin: 2rem auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.testimonial-card p {
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.testimonial-card span {
+  display: block;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Mapa e contatos */
+.contact-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  align-items: stretch;
+  text-align: left;
+}
+
+.map-container {
+  flex: 1 1 400px;
+  max-width: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.info-container {
+  flex: 1 1 300px;
+  max-width: 400px;
+  padding: 1rem;
+}
+
+.info-container h2 {
+  color: #0077b6;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
+/* Rodapé */
+.main-footer {
+  background: #a9d2f3;
+  color: white;
+  padding: 1.2rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+/* Botão flutuante Scroll to Top */
+.scroll-top {
+  position: fixed;
+  bottom: 20px;
+  right: 40px;
+  background: #a9d2f3; /* azul clarinho da paleta */
+  border: 3px solid #0077b6;
+  color: #0077b6;
+  padding: 10px 20px;
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 1.7rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: 0.3s ease;
+  z-index: 1000;
+}
+
+.scroll-top:hover {
+  background: #0077b6;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .contact-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-container {
+    text-align: center;
+  }
+}

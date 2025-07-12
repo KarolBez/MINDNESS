@@ -1,0 +1,84 @@
+.agendamento-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #edf4ff, #d6e9ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.agendamento-box {
+  background: white;
+  padding: 40px;
+  border-radius: 30px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.agendamento-box h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #1f2d3d;
+}
+
+.agendamento-box label {
+  font-weight: 500;
+  color: #1f2d3d;
+}
+
+.agendamento-box input[type='date'] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-size: 1rem;
+}
+
+.horarios-section,
+.pagamento-section {
+  margin-top: 20px;
+}
+
+.horarios,
+.pagamentos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.horarios button,
+.pagamentos button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: #f0f6ff;
+  border: 1px solid #90c8f0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.horarios button.ativo,
+.pagamentos button.ativo {
+  background-color: #90c8f0;
+  color: white;
+  border: none;
+}
+
+.confirmar {
+  margin-top: 30px;
+  background-color: #1f88e5;
+  color: white;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.confirmar:hover {
+  background-color: #1170c6;
+}

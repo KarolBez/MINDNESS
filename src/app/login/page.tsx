@@ -1,11 +1,13 @@
 'use client'
 import './login.css'
 import Link from 'next/link';
+import VoltarHomeButton from '@/components/VoltaHomeButton';
 
 export default function LoginPage() {
   return (
     <div className="login-container">
       <div className="login-box">
+              <VoltarHomeButton />
         <h1>Bem-vindo à <span className="highlight-blue">Mindness</span></h1>
         <p>Soluções em saúde emocional para empresas</p>
 

@@ -2,10 +2,14 @@
 'use client'
 import Link from 'next/link';
 import './servicos.css';
+import VoltarHomeButton from '@/components/VoltaHomeButton';
+
+
 
 export default function Servicos() {
   return (
     <div className="servicos-container">
+        <VoltarHomeButton />
       <h1 className="titulo">Serviços Mindness</h1>
       <div className="grid-servicos">
         <div className="card-servico">

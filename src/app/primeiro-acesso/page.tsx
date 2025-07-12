@@ -1,10 +1,12 @@
 'use client';
 import './primeiro-acesso.css';
 import { useRouter } from 'next/navigation';
+import VoltarHomeButton from '@/components/VoltaHomeButton';
 
 export default function PrimeiroAcesso() {
   return (
     <div className="primeiro-acesso-container">
+              <VoltarHomeButton />
       <div className="form-box">
         <h1>
           <span className="highlight-blue">Mindness</span> – Primeiro Acesso
