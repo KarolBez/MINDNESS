@@ -1,0 +1,18 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Ou postgresql, se preferir
+  url      = "file:./dev.db"
+}
+
+model Admin {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  name     String
+}
+
