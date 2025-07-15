@@ -1,6 +1,5 @@
 'use client';
 import './primeiro-acesso.css';
-import { useRouter } from 'next/navigation';
 import VoltarHomeButton from '@/components/VoltaHomeButton';
 
 export default function PrimeiroAcesso() {
