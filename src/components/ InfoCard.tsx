@@ -14,14 +14,12 @@ export default function InfoCard() {
       <Slideshow />
 
       <a
-        href="https://wa.me/5588992347927" 
+        href="https://wa.me/5588992347927"
         target="_blank"
         rel="noopener noreferrer"
-        className="circle whatsapp-button"
+        className="whatsapp-float"
         aria-label="Fale conosco no WhatsApp"
-      >
-        <img src="/whatsapp-icon.svg" alt="WhatsApp" />
-      </a>
+      ></a>
     </div>
   )
 }
