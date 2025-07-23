@@ -8,7 +8,7 @@
   text-align: center;
   font-family: 'Segoe UI', sans-serif;
   color: #1f2d3d;
-  background-color: #e5f2fd; /* azul claro da paleta */
+  background-color: #e5f2fd;
 }
 
 /* Títulos */
@@ -33,7 +33,7 @@ p {
 .cta-button {
   display: inline-block;
   margin-top: 2rem;
-  background-color: 	#a9d2f3; /* azul clarinho da paleta */
+  background-color: #a9d2f3;
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
@@ -48,19 +48,148 @@ p {
 
 /* Benefícios */
 .benefits-section ul {
-  list-style: none;
-  padding: 0;
+  list-style: disc;
+  padding-left: 1.5rem;
   margin-top: 2rem;
+  text-align: left;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .benefits-section li {
   font-size: 1.1rem;
   margin-bottom: 0.75rem;
+  color: #1f2d3d;
+}
+
+/* Seção de Serviços */
+.servicos-home-container {
+  padding: 4rem 2rem;
+  background-color: #e5f2fd;
+  text-align: center;
+}
+
+.titulo-servicos {
+  font-size: 2rem;
+  margin-bottom: 2.5rem;
+  color: #0077b6;
+}
+
+.grid-servicos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card-servico {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 320px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-servico:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.icon-servico {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+}
+
+.card-servico h3 {
+  color: #122ecc;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.card-servico ul {
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card-servico ul li {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #1f2d3d;
+}
+
+.saiba-mais-link {
+  color: #0077b6;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+.saiba-mais-link:hover {
+  text-decoration: underline;
+}
+
+/* Quick Links */
+.quick-links-section {
+  padding: 4rem 2rem;
+  background-color: #f8f8f6;
+}
+
+.quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.quick-link-box {
+  background: white;
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.quick-link-box:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.quick-link-box .emoji {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+}
+
+.quick-link-box h3 {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #122ecc;
+  margin-bottom: 0.75rem;
+}
+
+.quick-link-box p a {
+  color: #1f2d3d;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.quick-link-box p a:hover {
+  color: #122ecc;
+  text-decoration: underline;
 }
 
 /* Depoimentos */
 .testimonials-section {
-  background-color: #f8f9f8; /* branco gelo da paleta */
+  background-color: #f8f9f8;
 }
 
 .testimonial-card {
@@ -100,6 +229,13 @@ p {
   overflow: hidden;
 }
 
+.map-container iframe {
+  width: 100%;
+  height: 300px;
+  border: none;
+  border-radius: 12px;
+}
+
 .info-container {
   flex: 1 1 300px;
   max-width: 400px;
@@ -124,6 +260,7 @@ p {
   font-size: 0.95rem;
 }
 
+/* Botões flutuantes */
 .whatsapp-float {
   position: fixed;
   bottom: 20px;
@@ -140,10 +277,9 @@ p {
   z-index: 30;
 }
 
-
 .scroll-top {
   position: fixed;
-  bottom: 90px; 
+  bottom: 90px;
   right: 20px;
   width: 48px;
   height: 48px;
@@ -165,9 +301,13 @@ p {
   transform: scale(1.1);
 }
 
-
-/* Responsividade */
+/* Responsivo */
 @media (max-width: 768px) {
+  .grid-servicos {
+    flex-direction: column;
+    align-items: center;
+  }
+
   .contact-content {
     flex-direction: column;
     align-items: center;
@@ -177,60 +317,30 @@ p {
   .info-container {
     text-align: center;
   }
+
+  .benefits-section ul {
+    text-align: left;
+  }
 }
 
 
-.quick-links-section {
-  padding: 4rem 2rem;
-  background-color: #f8f8f6; /* branco gelo da paleta */
+.homepage-wrapper {
+  position: relative;
+  z-index: 1;
 }
 
-.quick-links-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.quick-link-box {
-  background: white;
-  padding: 2rem 1.5rem;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.quick-link-box:hover {
-  transform: scale(1.03);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-}
-
-.quick-link-box .emoji {
-  font-size: 2.8rem;
-  margin-bottom: 1rem;
-}
-
-.quick-link-box h3 {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #122ecc; /* azul forte da paleta */
-  margin-bottom: 0.75rem;
-}
-
-.quick-link-box p {
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.quick-link-box p a {
-  color: #1f2d3d;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.quick-link-box p a:hover {
-  color: #122ecc;
-  text-decoration: underline;
+.homepage-wrapper::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/LOGO.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 45%;
+  opacity: 0.04; 
+  z-index: 0;
+  pointer-events: none;
 }

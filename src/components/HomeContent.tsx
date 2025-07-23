@@ -1,12 +1,12 @@
-'use client'
-import Link from 'next/link'
-import './HomeContent.css'
+'use client';
+import Link from 'next/link';
+import './HomeContent.css';
 
 export default function HomeContent() {
   return (
-    <>
+    <div className="homepage-wrapper">
       {/* Seção de Introdução */}
-      <section className="intro-section">
+      <section className="intro-section" id="topo">
         <h1>
           Bem-vindo à <span className="highlight">Mindness</span>
         </h1>
@@ -19,7 +19,7 @@ export default function HomeContent() {
       </section>
 
       {/* Sobre a empresa */}
-      <section className="about-section">
+      <section className="about-section" id="sobre">
         <h2>Sobre a Mindness</h2>
         <p>
           Somos especialistas em saúde mental no ambiente corporativo. Nossos serviços fortalecem o bem-estar emocional e a cultura de cuidado nas organizações.
@@ -37,13 +37,62 @@ export default function HomeContent() {
         </ul>
       </section>
 
-      {/* Seção de blocos com links rápidos */}
+      {/* Nossos Serviços */}
+      <section className="servicos-home-container" id="servicos">
+        <h2 className="titulo-servicos">Nossos Serviços</h2>
+        <div className="grid-servicos">
+          {/* Diagnóstico */}
+          <div className="card-servico">
+            <img src="/diagnostic.svg" alt="Diagnóstico" className="icon-servico" />
+            <h3>Diagnóstico</h3>
+            <ul>
+              <li>Mapeamento emocional da equipe</li>
+              <li>Relatório para o RH com plano de ação</li>
+              <li>Análise de clima e engajamento</li>
+            </ul>
+            <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
+              Saiba mais no WhatsApp
+            </Link>
+          </div>
+
+          {/* Treinamentos */}
+          <div className="card-servico">
+            <img src="/teacher.svg" alt="Treinamentos" className="icon-servico" />
+            <h3>Treinamentos e Capacitações</h3>
+            <ul>
+              <li>Workshops sobre saúde mental</li>
+              <li>Liderança empática e escuta ativa</li>
+              <li>Empresa pode subsidiar o valor</li>
+            </ul>
+            <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
+              Saiba mais no WhatsApp
+            </Link>
+          </div>
+
+          {/* Atendimento */}
+          <div className="card-servico">
+            <img src="/psychology.svg" alt="Atendimento Psicológico" className="icon-servico" />
+            <h3>Atendimento Psicológico</h3>
+            <ul>
+              <li>Sessões por R$ 65,00</li>
+              <li>Agendamento pelo site</li>
+              <li>Aplicado a familiares de 1º grau</li>
+              <li>Empresa pode subsidiar o valor</li>
+            </ul>
+            <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
+              Saiba mais no WhatsApp
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Links rápidos */}
       <section className="quick-links-section">
         <div className="quick-links-grid">
           <div className="quick-link-box">
             <div className="emoji">🧠</div>
             <h3>Serviços</h3>
-            <p><Link href="/services">Conheça nossas soluções</Link></p>
+            <p><Link href="/#servicos">Conheça nossas soluções</Link></p>
           </div>
           <div className="quick-link-box">
             <div className="emoji">📝</div>
@@ -72,15 +121,12 @@ export default function HomeContent() {
         </div>
       </section>
 
-      {/* Mapa e contato */}
+      {/* Mapa e Contato */}
       <section className="contact-map-section">
         <div className="contact-content">
           <div className="map-container">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3950.3763789684613!2d-34.87589792544177!3d-8.0630366805675!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7ab18e8c1630829%3A0x6bf01b6f8219685b!2zVEkuU2HDumRl!5e0!3m2!1spt-BR!2sjp!4v1752354419329!5m2!1spt-BR!2sjp"
-              width="100%"
-              height="300"
-              style={{ border: 0 }}
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3950.3763789684613!2d-34.87589792544177!3d-8.0630366805675"
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -98,14 +144,12 @@ export default function HomeContent() {
 
       {/* Rodapé */}
       <footer className="main-footer">
-        <p>
-          © 2025 Desenvolvido pela <strong>Mindness</strong>. Todos os direitos reservados.
-        </p>
+        <p>© 2025 Desenvolvido pela <strong>Mindness</strong>. Todos os direitos reservados.</p>
       </footer>
 
       {/* Botões flutuantes */}
-      <a href="#top" className="scroll-top">↑</a>
+      <a href="#topo" className="scroll-top">↑</a>
       <a href="https://wa.me/5588992347927" target="_blank" className="whatsapp-float" />
-    </>
+    </div>
   );
 }
