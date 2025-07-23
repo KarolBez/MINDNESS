@@ -11,7 +11,6 @@ export default function Navbar() {
       <Link href="/" className="nav-link">Página Inicial</Link>
       <Link href="/sobre" className="nav-link">Sobre</Link>
       <Link href="/services" className="nav-link">Serviços</Link>
-      <Link href="/agendamento" className="nav-link agendamento-link">Agendamento</Link>
       <Link href="/blog" className="nav-link">Nosso Blog</Link>
       <Link href="/login" className="nav-link login-link">Login</Link>
     </nav>

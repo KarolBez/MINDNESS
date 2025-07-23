@@ -91,3 +91,44 @@ form button:hover {
   background-color: #90c8f0;
   color: white;
 }
+
+
+
+.admin-button {
+  background-color: transparent;
+  border: none;
+  color: #0070f3;
+  cursor: pointer;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+.admin-login {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f7f7f7;
+}
+
+.admin-login h3 {
+  margin-bottom: 0.5rem;
+}
+
+.admin-login input {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.admin-submit {
+  background-color: #0070f3;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
