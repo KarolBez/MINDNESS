@@ -4,23 +4,35 @@ import './agendamento.css';
 import { toast } from 'react-hot-toast';
 import VoltarHomeButton from '@/components/VoltaHomeButton';
 import { loadStripe } from '@stripe/stripe-js';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
 
 export default function Agendamento() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [data, setData] = useState('');
   const [horaSelecionada, setHoraSelecionada] = useState('');
   const [formaPagamento, setFormaPagamento] = useState('');
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState(false);
 
   const horariosDisponiveis = ['09:00', '10:30', '14:00', '16:00'];
 
   useEffect(() => {
-    console.log('Chave pública Stripe:', process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
-  }, []);
+    if (status === 'unauthenticated') {
+      toast.error('Você precisa estar logado para agendar.');
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  if (status === 'loading') {
+    return <p>Carregando autenticação...</p>;
+  }
 
   const confirmarAgendamento = () => {
     toast.success('Agendamento confirmado com sucesso!');
-    // window.location.href = '/sucesso';
   };
 
   const pagarComCartao = async () => {
@@ -53,10 +65,34 @@ export default function Agendamento() {
             setData(e.target.value);
             setHoraSelecionada('');
             setFormaPagamento('');
+            setProfissionalSelecionado(false);
           }}
         />
 
+        {/* Profissional (somente se data for selecionada) */}
         {data && (
+          <div className="profissional-container">
+            <h2>Escolha sua profissional</h2>
+            <div className="card-profissional">
+              <img
+                src="/avatar-psicologa.png"
+                alt="Psicóloga"
+                className="avatar"
+              />
+              <h3>Thays Fernandes</h3>
+              <p>Psicóloga especializada em saúde emocional no ambiente corporativo. Atendimento humanizado e acolhedor.</p>
+              <button
+                className="botao-selecionar"
+                onClick={() => setProfissionalSelecionado(true)}
+              >
+                Selecionar profissional
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Horários (somente se profissional foi selecionado) */}
+        {data && profissionalSelecionado && (
           <div className="horarios-section">
             <h3>Horários disponíveis</h3>
             <div className="horarios">
@@ -76,6 +112,7 @@ export default function Agendamento() {
           </div>
         )}
 
+        {/* Forma de pagamento */}
         {horaSelecionada && (
           <div className="pagamento-section">
             <h3>Forma de pagamento</h3>
@@ -93,6 +130,7 @@ export default function Agendamento() {
           </div>
         )}
 
+        {/* Pagamento com Pix */}
         {formaPagamento === 'PIX' && (
           <div className="qr-pix-container">
             <h4>Escaneie o QR Code para pagar R$ 65,00</h4>
@@ -105,21 +143,24 @@ export default function Agendamento() {
           </div>
         )}
 
+        {/* Pagamento com Boleto */}
         {formaPagamento === 'Boleto' && (
           <p className="boleto-info">
             O boleto será gerado e enviado para o e-mail cadastrado.
           </p>
         )}
 
+        {/* Pagamento com Cartão */}
         {formaPagamento === 'Cartão' && (
           <div className="cartao-info">
-            <p>Você será redirecionado para o pagamento com cartão via TI Saúder.</p>
+            <p>Você será redirecionado para o pagamento com cartão via TI Saúde.</p>
             <button className="confirmar" onClick={pagarComCartao}>
               Pagar com Cartão
             </button>
           </div>
         )}
 
+        {/* Botão final */}
         {['PIX', 'Boleto'].includes(formaPagamento) && (
           <button className="confirmar" onClick={confirmarAgendamento}>
             Confirmar e Redirecionar

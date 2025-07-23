@@ -1,6 +1,6 @@
-'use client';
-import Link from 'next/link';
-import './HomeContent.css';
+'use client'
+import Link from 'next/link'
+import './HomeContent.css'
 
 export default function HomeContent() {
   return (
@@ -37,6 +37,32 @@ export default function HomeContent() {
         </ul>
       </section>
 
+      {/* Seção de blocos com links rápidos */}
+      <section className="quick-links-section">
+        <div className="quick-links-grid">
+          <div className="quick-link-box">
+            <div className="emoji">🧠</div>
+            <h3>Serviços</h3>
+            <p><Link href="/services">Conheça nossas soluções</Link></p>
+          </div>
+          <div className="quick-link-box">
+            <div className="emoji">📝</div>
+            <h3>Blog</h3>
+            <p><Link href="/blog">Dicas e conteúdos sobre saúde emocional</Link></p>
+          </div>
+          <div className="quick-link-box">
+            <div className="emoji">📅</div>
+            <h3>Agendamento</h3>
+            <p><Link href="/agendamento">Agende uma sessão</Link></p>
+          </div>
+          <div className="quick-link-box">
+            <div className="emoji">🔐</div>
+            <h3>Login</h3>
+            <p><Link href="/login">Entrar como usuário ou admin</Link></p>
+          </div>
+        </div>
+      </section>
+
       {/* Depoimentos */}
       <section className="testimonials-section">
         <h2>Depoimentos</h2>
@@ -63,7 +89,7 @@ export default function HomeContent() {
           <div className="info-container">
             <h2>Mindness</h2>
             <p>Av. da Saúde Emocional, 123 – São Paulo, SP</p>
-            <p>Whatsapp: (11) 91234-5678</p>
+            <p>Whatsapp: (88) 99234-7927</p>
             <p>Email: contato@mindness.com</p>
             <p>Segunda a Sexta, das 08h às 18h</p>
           </div>
@@ -75,16 +101,11 @@ export default function HomeContent() {
         <p>
           © 2025 Desenvolvido pela <strong>Mindness</strong>. Todos os direitos reservados.
         </p>
-        <div className="social-icons">
-     
-          
-        </div>
       </footer>
 
       {/* Botões flutuantes */}
       <a href="#top" className="scroll-top">↑</a>
-      <a href="https://wa.me/5511912345678" target="_blank" className="whatsapp-float">
-      </a>
+      <a href="https://wa.me/5588992347927" target="_blank" className="whatsapp-float" />
     </>
   );
 }

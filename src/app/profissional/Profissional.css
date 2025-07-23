@@ -1,0 +1,49 @@
+.profissional-container {
+  padding: 3rem 1rem;
+  text-align: center;
+  background-color: #e5f2fd;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.card-profissional {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.card-profissional h3 {
+  color: #0077b6;
+  margin-bottom: 0.5rem;
+}
+
+.card-profissional p {
+  color: #444;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.botao-selecionar {
+  background-color: #009be0;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.botao-selecionar:hover {
+  background-color: #0077b6;
+}

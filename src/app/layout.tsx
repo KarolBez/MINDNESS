@@ -1,5 +1,6 @@
-import './globals.css'
+import './globals.css';
 import { Toaster } from 'react-hot-toast';
+import AuthProvider from '@/components/AuthProvider'; 
 
 export const metadata = {
   title: 'Mindness',
@@ -7,7 +8,7 @@ export const metadata = {
   icons: {
     icon: '/logo.png',
   },
-}
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,8 +18,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>Mindness</title>
         <meta name="description" content="Página institucional moderna e acolhedora" />
       </head>
-      <body>{children}</body>
-       <Toaster position="top-right" />
+      <body>
+        <AuthProvider>
+          {children}
+          <Toaster position="top-right" />
+        </AuthProvider>
+      </body>
     </html>
-  )
+  );
 }

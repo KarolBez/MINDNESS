@@ -1,11 +1,12 @@
 'use client'
-import Link from 'next/link';
-import './servicos.css';
+import Link from 'next/link'
+import '@/app/services/servicos.css'
+
 
 export default function ServicosHome() {
   return (
-    <section className="servicos-home-container">
-      <h2 className="titulo-servicos">Nossos Serviços</h2>
+    <section className="servicos-container">
+      <h2 className="titulo">Serviços Mindness</h2>
       <div className="grid-servicos">
         <div className="card-servico">
           <img src="/diagnostic.svg" alt="Diagnóstico" className="icon-servico" />
@@ -15,50 +16,39 @@ export default function ServicosHome() {
             <li>Relatório para o RH com plano de ação</li>
             <li>Análise de clima e engajamento</li>
           </ul>
-          <Link
-            href="https://wa.me/5588992347927"
-            target="_blank"
-            className="saiba-mais-link"
-          >
-            Saiba mais no WhatsApp
-          </Link>
         </div>
 
         <div className="card-servico">
           <img src="/teacher.svg" alt="Treinamentos" className="icon-servico" />
           <h3>Treinamentos e Capacitações</h3>
           <ul>
-            <li>Workshops sobre saúde mental</li>
+            <li>Workshops sobre saúde mental no trabalho</li>
             <li>Liderança empática e escuta ativa</li>
             <li>Empresa pode subsidiar o valor</li>
           </ul>
-          <Link
-            href="https://wa.me/5588992347927"
-            target="_blank"
-            className="saiba-mais-link"
-          >
-            Saiba mais no WhatsApp
-          </Link>
         </div>
 
         <div className="card-servico">
-          <img src="/psychology.svg" alt="Atendimento Psicológico" className="icon-servico" />
+          <img src="/psychology.svg" alt="Psicologia" className="icon-servico" />
           <h3>Atendimento Psicológico</h3>
           <ul>
             <li>Sessões por R$ 65,00</li>
             <li>Agendamento pelo site</li>
             <li>Aplicado a familiares de 1º grau</li>
             <li>Empresa pode subsidiar o valor</li>
+            <li>Faturamento mensal facilitado</li>
           </ul>
-          <Link
-            href="https://wa.me/5588992347927"
-            target="_blank"
-            className="saiba-mais-link"
-          >
-            Saiba mais no WhatsApp
-          </Link>
         </div>
       </div>
+
+      <Link
+        href="https://wa.me/5588992347927"
+        target="_blank"
+        className="whatsapp-float"
+        aria-label="Fale conosco no WhatsApp"
+      >
+        <img src="/whatsapp-icon.svg" alt="WhatsApp" />
+      </Link>
     </section>
-  );
+  )
 }

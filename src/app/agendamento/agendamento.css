@@ -108,3 +108,50 @@ input[type="date"] {
   display: flex;
   gap: 10px;
 }
+
+.profissional-container {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.card-profissional {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 0 auto 2rem;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.card-profissional h3 {
+  color: #0077b6;
+}
+
+.card-profissional p {
+  font-size: 0.95rem;
+  color: #333;
+  margin: 1rem 0;
+}
+
+.botao-selecionar {
+  background-color: #009be0;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.botao-selecionar:hover {
+  background-color: #0077b6;
+}
