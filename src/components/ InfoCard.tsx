@@ -9,7 +9,6 @@ export default function InfoCard() {
 
   return (
     <div className="card">
-      <h2>Mindness</h2>
       <p> </p> 
       <Slideshow />
 
