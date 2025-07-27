@@ -15,7 +15,7 @@
 h1, h2 {
   font-size: 2rem;
   margin-bottom: 1rem;
-  color: #0077b6;
+  color: black;
 }
 
 h1 .highlight {
@@ -47,21 +47,44 @@ p {
 }
 
 /* Benefícios */
-.benefits-section ul {
-  list-style: disc;
-  padding-left: 1.5rem;
-  margin-top: 2rem;
-  text-align: left;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 2rem auto 0;
+  text-align: center;
 }
 
-.benefits-section li {
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
-  color: #1f2d3d;
+.benefit-box {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease;
 }
+
+.benefit-box:hover {
+  transform: translateY(-5px);
+}
+
+.benefit-box .emoji {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+}
+
+.benefit-box h3 {
+  font-size: 1.2rem;
+  color: #122ecc;
+  margin-bottom: 0.5rem;
+}
+
+.benefit-box p {
+  font-size: 1rem;
+  color: #1f2d3d;
+  line-height: 1.5;
+}
+
 
 /* Seção de Serviços */
 .servicos-home-container {
@@ -73,16 +96,17 @@ p {
 .titulo-servicos {
   font-size: 2rem;
   margin-bottom: 2.5rem;
-  color: #0077b6;
+  color: #1f2d3d; 
+  font-weight: bold;
 }
-
 .grid-servicos {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap; 
   justify-content: center;
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  flex-wrap: nowrap;
 }
 
 .card-servico {
@@ -90,8 +114,12 @@ p {
   padding: 2rem;
   border-radius: 16px;
   width: 320px;
+  min-height: 360px; /* força altura mínima igual */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -104,6 +132,7 @@ p {
   width: 48px;
   height: 48px;
   margin-bottom: 1rem;
+  filter: brightness(0); 
 }
 
 .card-servico h3 {
@@ -135,6 +164,33 @@ p {
 .saiba-mais-link:hover {
   text-decoration: underline;
 }
+
+/* Botão Quero contratar */
+.contratar-container {
+  margin-top: 3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.botao-contratar {
+  background-color: #122ecc;         /* Azul principal */
+  color: white;
+  padding: 0.85rem 2rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  display: inline-block;
+  text-align: center;
+}
+
+.botao-contratar:hover {
+  background-color: #c2f0c2;         /* Verde da paleta */
+  color: #122ecc;                    /* Azul no texto para contraste */
+  cursor: pointer;
+}
+💡 Dica adicional
 
 /* Quick Links */
 .quick-links-section {
@@ -323,7 +379,7 @@ p {
   }
 }
 
-
+/* Marca d’água com LOGO.png */
 .homepage-wrapper {
   position: relative;
   z-index: 1;
@@ -340,7 +396,19 @@ p {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 45%;
-  opacity: 0.04; 
+  opacity: 0.04;
   z-index: 0;
   pointer-events: none;
+}
+
+
+.about-section {
+  scroll-margin-top: 100px; /* permite melhor posicionamento ao clicar no menu */
+  padding: 4rem 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.5); /* leve fundo para contraste */
+  border-radius: 16px;
+  max-width: 1000px;
+  margin: 4rem auto;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }

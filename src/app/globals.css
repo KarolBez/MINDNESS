@@ -1,8 +1,11 @@
 body {
-  margin: 0;
+  background-image: url('/LOGO.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60%;
+  background-attachment: fixed;
+  background-color: #f8f8f8; 
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(to bottom, #f0f6ff, #d9eaff);
-  color: #1f2d3d;
 }
 
 .navbar {
