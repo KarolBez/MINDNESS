@@ -75,7 +75,7 @@ p {
 
 .benefit-box h3 {
   font-size: 1.2rem;
-   color: #0071bc;
+   color: #90c8f0;
   margin-bottom: 0.5rem;
 }
 
@@ -136,7 +136,7 @@ p {
 }
 
 .card-servico h3 {
-  color: #0071bc;
+  color: #90c8f0;
   font-size: 1.3rem;
   margin-bottom: 1rem;
 }
@@ -295,13 +295,15 @@ p {
 .info-container {
   flex: 1 1 300px;
   max-width: 400px;
-  padding: 1rem;
+  padding: 0.5rem; 
+  font-size: 1.4rem; 
+  line-height: 1.4;
 }
 
 .info-container h2 {
   color: #0077b6;
-  font-size: 1.6rem;
-  margin-bottom: 1rem;
+  font-size: 1.2rem; 
+  margin-bottom: 0.5rem; 
 }
 
 /* Rodapé */
@@ -394,7 +396,6 @@ p {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/LOGO.png');
   background-repeat: no-repeat;
   background-position: center top;
   background-size: 45%;

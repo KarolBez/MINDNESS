@@ -68,7 +68,7 @@ export default function HomeContent() {
               <li>Análise de clima e engajamento</li>
             </ul>
             <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
-              Saiba mais no WhatsApp
+              Saiba mais
             </Link>
           </div>
 
@@ -81,7 +81,7 @@ export default function HomeContent() {
               <li>Empresa pode subsidiar o valor</li>
             </ul>
             <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
-              Saiba mais no WhatsApp
+              Saiba mais
             </Link>
           </div>
 
@@ -95,7 +95,7 @@ export default function HomeContent() {
               <li>Empresa pode subsidiar o valor</li>
             </ul>
             <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
-              Saiba mais no WhatsApp
+              Saiba mais
             </Link>
           </div>
         </div>
@@ -123,8 +123,8 @@ export default function HomeContent() {
 
       {/* Contato e mapa */}
       <section className="contact-map-section">
-  <div className="contact-content">
-    <div className="map-container">
+      <div className="contact-content">
+      <div className="map-container">
       <iframe
         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3603.1193282698805!2d-40.3674427!3d-3.6833952!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7eac6c1b36b216d%3A0xcbb68b2d64f91519!2sR.%20Eduardo%20de%20Almeida%20Sanford%2C%20635%20-%20Domingos%20Ol%C3%ADmpio%2C%20Sobral%20-%20CE%2C%2062022-390!5e1!3m2!1spt-BR!2sbr!4v1754325514098!5m2!1spt-BR!2sbr"
         width="100%"

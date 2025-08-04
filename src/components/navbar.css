@@ -36,14 +36,14 @@
 }
 
 .nav-item-button {
-  background-color: #0077b6;
+  background-color: #90c8f0;
   border-radius: 12px;
   padding: 0.25rem 0.5rem;
   transition: background 0.3s ease;
 }
 
 .nav-item-button:hover {
-  background-color: #005f91;
+  background-color: #90c8f0;
   transform: scale(1.03);
 }
 
