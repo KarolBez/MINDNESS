@@ -123,27 +123,28 @@ export default function HomeContent() {
 
       {/* Contato e mapa */}
       <section className="contact-map-section">
-        <div className="contact-content">
-          <div className="map-container">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.892229016719!2d-34.90747688571308!3d-8.099525591944146!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7ab18d5528db0d9%3A0xbbbaec5e4f02f8b6!2sAv.%20Mal.%20Mascarenhas%20de%20Morais%2C%204285%20-%20Imbiribeira%2C%20Recife%20-%20PE!5e0!3m2!1spt-BR!2sbr!4v1699989999999!5m2!1spt-BR!2sbr"
-              width="100%"
-              height="300"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-          <div className="info-container">
-            <h2>Mindness</h2>
-            <p>R. Mariz e Barros, 311 - Recife, PE, 50030-120</p>
-            <p>Whatsapp: (88) 99234-7927</p>
-            <p>Email: contato@mindness.com</p>
-            <p>Segunda a Sexta, das 08h às 18h</p>
-          </div>
-        </div>
-      </section>
+  <div className="contact-content">
+    <div className="map-container">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3603.1193282698805!2d-40.3674427!3d-3.6833952!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7eac6c1b36b216d%3A0xcbb68b2d64f91519!2sR.%20Eduardo%20de%20Almeida%20Sanford%2C%20635%20-%20Domingos%20Ol%C3%ADmpio%2C%20Sobral%20-%20CE%2C%2062022-390!5e1!3m2!1spt-BR!2sbr!4v1754325514098!5m2!1spt-BR!2sbr"
+        width="100%"
+        height="300"
+        style={{ border: 0 }}
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+      ></iframe>
+    </div>
+    <div className="info-container">
+      <h2>Mindness</h2>
+      <p>Rua Eduardo de Almeida Sanford, 635, Bairro Domingos Olímpio - 62022-390, Sobral - CE</p>
+      <p>Whatsapp: (88) 99234-7927</p>
+      <p>Email: contato@mindness.com</p>
+      <p>Segunda a Sexta, das 08h às 18h</p>
+    </div>
+  </div>
+</section>
+
 
       <footer className="main-footer">
         <p>© 2025 Desenvolvido pela <strong>Mindness</strong>. Todos os direitos reservados.</p>
