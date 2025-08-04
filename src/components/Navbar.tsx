@@ -37,7 +37,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-container">
         <Link href="/" className="logo-link">
-          <img src="/logo1.png" alt="Mindness Logo" className="logo-img" />
+          <img src="/LOGO.png" alt="Mindness Logo" className="logo-img" />
         </Link>
 
         <div className="nav-links">
