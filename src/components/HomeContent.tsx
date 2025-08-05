@@ -121,29 +121,31 @@ export default function HomeContent() {
         </div>
       </section>
 
-      {/* Contato e mapa */}
-      <section className="contact-map-section">
-      <div className="contact-content">
-      <div className="map-container">
-      <iframe
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3603.1193282698805!2d-40.3674427!3d-3.6833952!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7eac6c1b36b216d%3A0xcbb68b2d64f91519!2sR.%20Eduardo%20de%20Almeida%20Sanford%2C%20635%20-%20Domingos%20Ol%C3%ADmpio%2C%20Sobral%20-%20CE%2C%2062022-390!5e1!3m2!1spt-BR!2sbr!4v1754325514098!5m2!1spt-BR!2sbr"
-        width="100%"
-        height="300"
-        style={{ border: 0 }}
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      ></iframe>
-    </div>
-    <div className="info-container">
-      <h2>Mindness</h2>
-      <p>Rua Eduardo de Almeida Sanford, 635, Bairro Domingos Olímpio - 62022-390, Sobral - CE</p>
-      <p>Whatsapp: (88) 99234-7927</p>
-      <p>Email: contato@mindness.com</p>
-      <p>Segunda a Sexta, das 08h às 18h</p>
-    </div>
+
+<section className="contact-content">
+  <div className="info-container">
+    <h2>Responsável Técnico</h2>
+    <p>Thays Santos Fernandes</p>
+    <p>CRP 11/12962</p>
+
+    <div className="emoji">🖐️</div>
+
+    <p>
+      Atenção: Este site não oferece tratamento ou aconselhamento imediato para pessoas em crise suicida.
+    </p>
+    <p>
+      Em caso de crise, ligue para <strong>188 (CVV)</strong> ou acesse o site{' '}
+      <a href="https://www.cvv.org.br" target="_blank" rel="noopener noreferrer">
+        www.cvv.org.br
+      </a>.
+    </p>
+    <p>
+      Em caso de emergência, procure atendimento em um hospital mais próximo.
+    </p>
   </div>
 </section>
+
+
 
 
       <footer className="main-footer">

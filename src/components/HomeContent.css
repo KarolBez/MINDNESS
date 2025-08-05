@@ -268,43 +268,58 @@ p {
   color: #333;
 }
 
-/* Mapa e contatos */
+/* Mapa e contatos (agora para o bloco de Responsável Técnico) */
 .contact-content {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
   justify-content: center;
-  align-items: stretch;
-  text-align: left;
-}
-
-.map-container {
-  flex: 1 1 400px;
-  max-width: 600px;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.map-container iframe {
-  width: 100%;
-  height: 300px;
-  border: none;
-  border-radius: 12px;
+  padding: 2rem 1rem;
+  text-align: center;
+  background-color: #f8f8f6; /* fundo branco levemente acinzentado */
+  font-family: 'Montserrat', 'Open Sans', sans-serif;
 }
 
 .info-container {
-  flex: 1 1 300px;
-  max-width: 400px;
-  padding: 0.5rem; 
-  font-size: 1.4rem; 
-  line-height: 1.4;
+  max-width: 520px;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e3e3e3;
+  color: #333;
 }
 
 .info-container h2 {
-  color: #0077b6;
-  font-size: 1.2rem; 
-  margin-bottom: 0.5rem; 
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #90c8f0;
+  margin-bottom: 0.5rem;
 }
+
+.info-container p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0.3rem 0;
+}
+
+.info-container .emoji {
+  font-size: 1.8rem;
+  background-color: #fff8dc;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem auto;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-container a {
+  color: #122ecc;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
 
 /* Rodapé */
 .main-footer {
