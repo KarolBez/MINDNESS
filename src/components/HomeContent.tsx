@@ -38,7 +38,7 @@ export default function HomeContent() {
             <p>Menos afastamentos e maior bem-estar geral da equipe.</p>
           </div>
           <div className="benefit-box">
-            <span className="emoji">🌤️</span>
+            <span className="emoji">🌤</span>
             <h3>Melhoria no clima</h3>
             <p>Ambiente organizacional mais leve, colaborativo e saudável.</p>
           </div>
@@ -67,7 +67,7 @@ export default function HomeContent() {
               <li>Relatório para o RH com plano de ação</li>
               <li>Análise de clima e engajamento</li>
             </ul>
-            <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
+            <Link href="/diagnostico/DiagnosticoCard" className="saiba-mais-link">
               Saiba mais
             </Link>
           </div>
@@ -80,7 +80,7 @@ export default function HomeContent() {
               <li>Liderança empática e escuta ativa</li>
               <li>Empresa pode subsidiar o valor</li>
             </ul>
-            <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
+            <Link href="/diagnostico/DiagnosticoCard" className="saiba-mais-link">
               Saiba mais
             </Link>
           </div>
@@ -94,7 +94,7 @@ export default function HomeContent() {
               <li>Aplicado a familiares de 1º grau</li>
               <li>Empresa pode subsidiar o valor</li>
             </ul>
-            <Link href="https://wa.me/5588992347927" target="_blank" className="saiba-mais-link">
+            <Link href="/diagnostico/DiagnosticoCard" className="saiba-mais-link">
               Saiba mais
             </Link>
           </div>
@@ -128,7 +128,7 @@ export default function HomeContent() {
     <p>Thays Santos Fernandes</p>
     <p>CRP 11/12962</p>
 
-    <div className="emoji">🖐️</div>
+    <div className="emoji">🖐</div>
 
     <p>
       Atenção: Este site não oferece tratamento ou aconselhamento imediato para pessoas em crise suicida.
