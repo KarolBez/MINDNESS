@@ -10,12 +10,12 @@
   padding: 32px;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 720px; /* um pouco mais largo pro layout respirar */
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .agendamento-box h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   margin-bottom: 1rem;
 }
 
@@ -27,10 +27,83 @@ label {
 
 input[type="date"] {
   width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
+
+/* ===== Profissional ===== */
+
+.profissional-container {
+  margin-top: 2rem;
+}
+
+.profissional-container h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Card novo em linha */
+.card-profissional.novo {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+  max-width: 620px;
+  margin: 0 auto 1.5rem;
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar.pequeno {
+  width: 64px;
+  height: 64px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.prof-info h3 {
+  margin: 0 0 4px;
+  color: #0b67b3; /* azul mais forte no nome */
+  font-size: 1.1rem;
+}
+
+.prof-info p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.35rem;
+}
+
+/* Botão primário do card */
+.botao-selecionar.primario {
+  background-color: #0ea5e9;
+  color: #fff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background-color .3s ease;
+  white-space: nowrap;
+}
+.botao-selecionar.primario:hover {
+  background-color: #0284c7;
+  box-shadow: 0 6px 14px rgba(2, 132, 199, .25);
+  transform: translateY(-1px);
+}
+
+/* ===== Horários / Pagamentos ===== */
 
 .horarios-section,
 .pagamento-section {
@@ -47,18 +120,20 @@ input[type="date"] {
 
 .horarios button,
 .pagamentos button {
-  padding: 8px 16px;
-  border-radius: 8px;
-  background-color: #e0e0e0;
-  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.2s;
 }
 
 .horarios button.ativo,
 .pagamentos button.ativo {
-  background-color: #a5c9f1;
-  font-weight: bold;
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e3a8a;
+  font-weight: 700;
 }
 
 .confirmar {
@@ -68,22 +143,10 @@ input[type="date"] {
   background-color: #25d366;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-}
-
-.detalhes-pagamento {
-  margin-top: 24px;
-  text-align: center;
-}
-
-.pix-box {
-  background: #e0faff;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
 }
 
 .qr-pix {
@@ -91,67 +154,14 @@ input[type="date"] {
   margin-bottom: 10px;
 }
 
-.boleto-info {
-  font-style: italic;
-  margin-bottom: 20px;
-}
 
-.cartao-form input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.cartao-form .dupla {
-  display: flex;
-  gap: 10px;
-}
-
-.profissional-container {
-  margin-top: 2rem;
-  text-align: center;
-}
-
-.card-profissional {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  margin: 0 auto 2rem;
-}
-
-.avatar {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-bottom: 1rem;
-}
-
-.card-profissional h3 {
-  color: #0077b6;
-}
-
-.card-profissional p {
-  font-size: 0.95rem;
-  color: #333;
-  margin: 1rem 0;
-}
-
-.botao-selecionar {
-  background-color: #009be0;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.botao-selecionar:hover {
-  background-color: #0077b6;
+/* Responsivo */
+@media (max-width: 560px) {
+  .card-profissional.novo {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .botao-selecionar.primario {
+    width: 100%;
+  }
 }

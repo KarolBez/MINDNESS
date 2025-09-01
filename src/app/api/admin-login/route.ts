@@ -1,23 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import { NextResponse } from 'next/server';
 
-const prisma = new PrismaClient();
+export async function POST(req: Request) {
+  try {
+    const body = await req.json().catch(async () => {
+      const text = await req.text();
+      return JSON.parse(text || '{}');
+    });
 
-export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
+    const BACK = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const res = await fetch(`${BACK}/api/admin-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-  const admin = await prisma.admin.findUnique({
-    where: { email },
-  });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return NextResponse.json(data, { status: res.status || 401 });
 
-  if (!admin || !(await bcrypt.compare(password, admin.password))) {
-    return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+    return NextResponse.json(data);
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message || 'Falha no login' }, { status: 400 });
   }
-
-  return NextResponse.json({
-    id: admin.id,
-    name: admin.name,
-    email: admin.email,
-  });
 }

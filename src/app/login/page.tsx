@@ -17,14 +17,15 @@ export default function LoginPage() {
     try {
       const res = await fetch('/api/admin-login', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: adminEmail,
-          password: adminSenha,
+          senha: adminSenha,
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erro ao logar');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) throw new Error(data?.error || 'Erro ao logar');
 
       localStorage.setItem('admin', JSON.stringify(data));
       toast.success('Login de administrador bem-sucedido!');
@@ -41,7 +42,7 @@ export default function LoginPage() {
         <h1>Bem-vindo à <span className="highlight-blue">Mindness</span></h1>
         <p>Soluções em saúde emocional para empresas</p>
 
-        <form>
+        <form onSubmit={(e) => { e.preventDefault(); toast('Login de usuário em desenvolvimento'); }}>
           <label htmlFor="email">Login</label>
           <input type="email" id="email" placeholder="Digite seu login" />
 
@@ -72,12 +73,14 @@ export default function LoginPage() {
                 placeholder="E-mail do admin"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
+                required
               />
               <input
                 type="password"
                 placeholder="Senha"
                 value={adminSenha}
                 onChange={(e) => setAdminSenha(e.target.value)}
+                required
               />
               <button type="submit" className="admin-submit">
                 Acessar Painel
