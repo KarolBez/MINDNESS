@@ -132,3 +132,22 @@ form button:hover {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.sala-virtual-button {
+  width: 100%;
+  background-color: #90c8f0;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background-color .3s ease;
+  margin-bottom: 18px;
+}
+.sala-virtual-button:hover {
+  background-color: #0f25a8;
+  box-shadow: 0 6px 14px rgba(17, 24, 39, .15);
+  transform: translateY(-1px);
+}

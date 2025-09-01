@@ -35,22 +35,21 @@ export default function LoginPage() {
     }
   };
 
+  const irParaSalaVirtual = () => {
+    window.location.href = 'https://clinic.tisaude.com/#/';
+  };
+
   return (
     <div className="login-container">
       <div className="login-box">
         <VoltarHomeButton />
-        <h1>Bem-vindo à <span className="highlight-blue">Mindness</span></h1>
+        <h1>
+          Bem-vindo à <span className="highlight-blue">Mindness</span>
+        </h1>
         <p>Soluções em saúde emocional para empresas</p>
-
-        <form onSubmit={(e) => { e.preventDefault(); toast('Login de usuário em desenvolvimento'); }}>
-          <label htmlFor="email">Login</label>
-          <input type="email" id="email" placeholder="Digite seu login" />
-
-          <label htmlFor="senha">Senha</label>
-          <input type="password" id="senha" placeholder="Digite sua senha" />
-
-          <button type="submit">Entrar na Sala Virtual</button>
-        </form>
+        <button type="button" className="sala-virtual-button" onClick={irParaSalaVirtual}>
+          Entrar na Sala Virtual
+        </button>
 
         <div className="login-links">
           <Link href="/agendamento">📅 Fazer Agendamento</Link>
