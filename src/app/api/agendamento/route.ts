@@ -10,6 +10,8 @@ type Agendamento = {
   createdAt: string;
 };
 
+
+
 const AGENDAMENTOS: Agendamento[] = [];
 
 export async function GET() {
