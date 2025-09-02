@@ -13,7 +13,7 @@ type Prof = {
 
 const PROC_ID_DEFAULT = process.env.NEXT_PUBLIC_TISAUDE_PROCEDIMENTO_ID || '';
 
-/** Garante array antes de mapear (defensivo contra respostas variadas da API) */
+/** Helper: garante array antes de mapear (defensivo) */
 function toArraySafe(input: any): any[] {
   if (Array.isArray(input)) return input;
   if (!input || typeof input !== 'object') return [];
@@ -21,6 +21,48 @@ function toArraySafe(input: any): any[] {
   for (const c of candidates) if (Array.isArray(c)) return c;
   const values = Object.values(input);
   return Array.isArray(values) ? values : [];
+}
+
+/** Helper: se o array contém subarray com objetos, retorna esse subarray; senão retorna o próprio array */
+function pickNestedObjectArray(arr: any[]): any[] {
+  if (!Array.isArray(arr)) return [];
+  const nested = arr.find(
+    (el) => Array.isArray(el) && el.length > 0 && typeof el[0] === 'object' && !Array.isArray(el[0])
+  );
+  return Array.isArray(nested) ? nested : arr;
+}
+
+/** Helper: “achata” um nível (se houver subarray) */
+function flattenOne(arr: any[]): any[] {
+  if (!Array.isArray(arr)) return [];
+  // se houver subarray, concatena; senão retorna igual
+  const hasNested = arr.some(Array.isArray);
+  return hasNested ? arr.flat(1) : arr;
+}
+
+/** Helper: normaliza datas — sempre devolve string[] (YYYY-MM-DD) */
+function normalizeDates(raw: any): string[] {
+  // pode vir como { ok, items: [ [cabecalho], [ {data: "..."} ] ] }
+  const base = toArraySafe(raw?.items ?? raw);
+  const list = pickNestedObjectArray(base);
+  return list
+    .map((d: any) => (typeof d === 'string' ? d : d?.data))
+    .filter(Boolean);
+}
+
+/** Helper: normaliza horas — pode vir como objetos { horario: "HH:mm:ss" } */
+function normalizeHours(raw: any): string[] {
+  const base = toArraySafe(raw?.items ?? raw);
+  // se o primeiro nível tiver objetos com horario, usa direto
+  const arr = pickNestedObjectArray(base);
+  const hours = arr
+    .map((h: any) =>
+      typeof h === 'string'
+        ? h
+        : h?.horario ?? h?.hora ?? h?.Hora ?? ''
+    )
+    .filter(Boolean);
+  return hours;
 }
 
 export default function Agendamento() {
@@ -48,16 +90,22 @@ export default function Agendamento() {
 
         if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao listar profissionais');
 
-        const arr = toArraySafe(json.items);
+        // A API retorna items com subarray no fim; extraímos esse subarray
+        const raw = toArraySafe(json.items);
+        const arr = pickNestedObjectArray(raw);
+
         const list: Prof[] = arr
+          .filter((p: any) => p && typeof p === 'object' && !Array.isArray(p))
           .map((p: any) => ({
             id: p.id ?? p.id_profissional ?? p.procedimento_id ?? p.codigo ?? p.ID,
             nome: p.nome ?? p.nome_profissional ?? p.descricao ?? 'Profissional',
             nome_profissional: p.nome_profissional,
-            foto: p.foto ?? null,
+            // usa foto oficial da TI Saúde se existir:
+            foto: p.profilepicture ?? p.foto ?? null,
           }))
           .filter((x: any) => x.id != null);
 
+        console.log('[profissionais] normalizados:', list);
         setProfissionais(list);
       } catch (e: any) {
         console.error('[profissionais] erro:', e);
@@ -86,7 +134,9 @@ export default function Agendamento() {
 
       if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao listar datas');
 
-      setDatas(toArraySafe(json.items));
+      const list = normalizeDates(json);
+      console.log('[datas] normalizadas:', list);
+      setDatas(list);
     } catch (e: any) {
       console.error('[datas] erro:', e);
       toast.error(e?.message || 'Erro ao carregar datas');
@@ -112,10 +162,9 @@ export default function Agendamento() {
 
       if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao listar horários');
 
-      const arr = toArraySafe(json.items).map((h: any) =>
-        typeof h === 'string' ? h : (h.hora ?? h.Hora ?? '')
-      );
-      setHoras(arr.filter(Boolean));
+      const list = normalizeHours(json);
+      console.log('[horas] normalizadas:', list);
+      setHoras(list);
     } catch (e: any) {
       console.error('[horas] erro:', e);
       toast.error(e?.message || 'Erro ao carregar horários');
@@ -132,7 +181,8 @@ export default function Agendamento() {
     }
     try {
       const procedimentoId = String(profissional.id || PROC_ID_DEFAULT);
-      const payload = { procedimentoId, data: dataSel, hora: horaSel + (horaSel.length === 5 ? ':00' : '') };
+      const horaFmt = horaSel.length === 5 ? `${horaSel}:00` : horaSel;
+      const payload = { procedimentoId, data: dataSel, hora: horaFmt };
       console.log('[consulta] payload:', payload);
 
       const res = await fetch('/api/tisaude/consulta', {
@@ -145,7 +195,10 @@ export default function Agendamento() {
 
       if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao agendar');
 
+      // Se vier link_agendamento na resposta upstream, já pode abrir:
+      const link = json?.data?.agendamento?.link_agendamento;
       toast.success('Agendamento criado com sucesso!');
+      if (link) window.open(link, '_blank');
     } catch (e: any) {
       console.error('[consulta] erro:', e);
       toast.error(e?.message || 'Erro ao agendar consulta');
@@ -153,7 +206,7 @@ export default function Agendamento() {
   }
 
   const horasFmt = useMemo(
-    () => horas.map(h => (h?.length === 8 ? h.slice(0, 5) : h)),
+    () => horas.map((h) => (h?.length === 8 ? h.slice(0, 5) : h)),
     [horas]
   );
 
