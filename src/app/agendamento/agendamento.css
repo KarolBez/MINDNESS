@@ -10,15 +10,23 @@
   padding: 32px;
   border-radius: 12px;
   width: 100%;
-  max-width: 720px; /* um pouco mais largo pro layout respirar */
+  max-width: 920px; /* mais largo e centralizado */
+  margin: 0 auto;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+/* ===== Título ===== */
 .agendamento-box h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  color: #0b67b3; /* azul da paleta */
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
+/* ===== Labels ===== */
 label {
   display: block;
   margin: 16px 0 8px;
@@ -33,18 +41,21 @@ input[type="date"] {
 }
 
 /* ===== Profissional ===== */
-
 .profissional-container {
   margin-top: 2rem;
 }
 
 .profissional-container h2 {
   text-align: center;
-  font-size: 2rem;
+  color: #0b67b3;
+  font-size: clamp(1.3rem, 2.4vw, 1.8rem);
+  line-height: 1.2;
   margin-bottom: 1.25rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-/* Card novo em linha */
+/* Card do profissional */
 .card-profissional.novo {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -104,16 +115,24 @@ input[type="date"] {
 }
 
 /* ===== Horários / Pagamentos ===== */
-
 .horarios-section,
 .pagamento-section {
   margin-top: 24px;
 }
 
+.horarios-section h3,
+.pagamento-section h3 {
+  color: #0b67b3;
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  margin-bottom: 10px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .horarios,
 .pagamentos {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
   margin-top: 10px;
 }
@@ -126,6 +145,7 @@ input[type="date"] {
   border: 1px solid #e2e8f0;
   cursor: pointer;
   transition: 0.2s;
+  min-height: 44px;
 }
 
 .horarios button.ativo,
@@ -136,26 +156,31 @@ input[type="date"] {
   font-weight: 700;
 }
 
+/* ===== Botão Confirmar ===== */
 .confirmar {
   margin-top: 24px;
   width: 100%;
   padding: 12px;
-  background-color: #25d366;
+  background: linear-gradient(90deg, #22c55e, #16a34a); /* verde gradiente */
   color: white;
   border: none;
   border-radius: 10px;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
+  transition: background .3s ease;
+}
+.confirmar:hover {
+  background: linear-gradient(90deg, #16a34a, #15803d);
 }
 
+/* QR Pix */
 .qr-pix {
   width: 180px;
   margin-bottom: 10px;
 }
 
-
-/* Responsivo */
+/* ===== Responsivo ===== */
 @media (max-width: 560px) {
   .card-profissional.novo {
     grid-template-columns: 1fr;
@@ -163,5 +188,15 @@ input[type="date"] {
   }
   .botao-selecionar.primario {
     width: 100%;
+  }
+  .horarios,
+  .pagamentos {
+    grid-template-columns: 1fr 1fr;
+  }
+  .agendamento-container {
+    padding: 24px 12px 40px;
+  }
+  .agendamento-box {
+    border-radius: 14px;
   }
 }

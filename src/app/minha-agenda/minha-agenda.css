@@ -1,0 +1,149 @@
+/* Tipografia do brand */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
+
+:root{
+  /* Paleta Mindness */
+  --mind-blue-ice:#cfe8ff;
+  --mind-blue-soft:#bfe0ff;
+  --mind-blue:#8ec5ff;
+  --mind-blue-deep:#6aaef0;
+  --mind-blue-ink:#244a86;
+
+  --mind-green:#96e9ab;
+  --mind-green-deep:#2fb36d;
+
+  --bg:#f5f7fa;
+  --text:#0f172a;
+  --muted:#6b7280;
+
+  --card:#ffffff;
+  --radius:18px;
+  --shadow:0 14px 34px rgba(19,55,104,.10);
+  --shadow-soft:0 8px 18px rgba(19,55,104,.08);
+
+  /* borda gradiente bem sutil */
+  --stroke: linear-gradient(180deg, rgba(111,173,240,.28), rgba(111,173,240,.12));
+}
+
+/* ===== Page wrapper com halos azuis ===== */
+.ma-wrap{
+  min-height:100vh;
+  background:
+    radial-gradient(900px 320px at 12% -10%, rgba(207,232,255,.65), transparent 60%),
+    radial-gradient(760px 240px at 90% -8%, rgba(191,224,255,.45), transparent 55%),
+    var(--bg);
+  padding: 28px clamp(16px,3vw,32px);
+  color:var(--text);
+  max-width:1120px;
+  margin:0 auto;
+  font-family:'Open Sans',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;
+}
+
+/* ===== Header ===== */
+.ma-tt,.ma-card__title{ font-family:'Montserrat',sans-serif; }
+.ma-hero{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  margin-bottom:16px;
+}
+.ma-tt{ font-size:clamp(26px,3vw,32px); font-weight:600; letter-spacing:.2px; }
+.ma-sub{ margin-top:4px; color:var(--muted); }
+
+/* CTA harmonizado (azul→verde) */
+.ma-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:12px 18px; border-radius:14px;
+  text-decoration:none; font-weight:700; letter-spacing:.2px;
+  border:1px solid transparent; transition:.18s ease;
+  font-family:'Montserrat',sans-serif;
+}
+.ma-btn:active{ transform:translateY(1px); }
+
+.ma-btn-primary{
+  background:
+    linear-gradient(180deg, var(--mind-blue-deep) 0%, #5ea6ef 55%, var(--mind-green-deep) 180%);
+  color:#fff; box-shadow:var(--shadow);
+}
+.ma-btn-primary:hover{ filter:brightness(1.05); }
+
+/* Ghost secundário (usado no empty state) */
+.ma-btn-outline{
+  background:#fff; color:var(--mind-green-deep);
+  border-color:var(--mind-green-deep); box-shadow:var(--shadow-soft);
+}
+.ma-btn-outline:hover{ background:var(--mind-green); color:#0b3a23; }
+
+/* ===== Cards glass + stroke ===== */
+.ma-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-soft);
+  border:1px solid transparent; /* para o stroke */
+  background-clip: padding-box, border-box;
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.88)),
+    var(--stroke);
+}
+.ma-card--glass{ backdrop-filter: blur(6px); }
+
+.ma-card__head{
+  padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+.ma-card__title{ font-weight:600; color:#142c54; }
+
+/* ===== Grid de dados ===== */
+.ma-grid{
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px 18px; padding:16px 18px;
+}
+@media (max-width:720px){ .ma-grid{ grid-template-columns:1fr; } }
+
+.ma-label{ color:var(--muted); font-size:12px; display:block; }
+.ma-value{
+  font-weight:600; font-family:'Montserrat',sans-serif;
+  color:#1f2d3d;
+}
+
+/* ===== Lista de agendamentos ===== */
+.ma-list{ margin-top:18px; }
+.ma-ul{ list-style:none; padding:0; margin:0; display:grid; gap:14px; }
+.ma-item .ma-item__head{ padding:12px 16px; border-bottom:1px solid rgba(0,0,0,.05); }
+.ma-created{ color:var(--muted); font-size:12px; }
+
+/* Chips flat/ghost com paleta Mindness */
+.ma-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.ma-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 12px; border-radius:10px;
+  font-size:12px; font-weight:600; letter-spacing:.1px;
+  background:#fff; color:var(--mind-blue-ink);
+  border:1px solid var(--mind-blue-soft); box-shadow:0 1px 0 rgba(0,0,0,.02);
+}
+.ma-chip::before{
+  content:""; width:6px; height:6px; border-radius:999px;
+  background: var(--mind-blue-deep);
+}
+.ma-chip--amber-outline{
+  border-color:#fbd38d; color:#8a5a00;
+}
+.ma-chip--amber-outline::before{ background:#f4b942; }
+
+.ma-chip--mint-outline{
+  border-color:#bdf1c9; color:#0b3a23;
+}
+.ma-chip--mint-outline::before{ background:var(--mind-green-deep); }
+
+/* ===== Empty state ===== */
+.ma-empty{
+  text-align:center; padding:28px 16px; border-radius:var(--radius);
+  border:1px dashed rgba(0,0,0,.06);
+  background:
+    radial-gradient(45% 80% at 0% 0%, rgba(207,232,255,.55), transparent 60%),
+    radial-gradient(60% 120% at 100% 0%, rgba(190,224,255,.35), transparent 60%),
+    #fff;
+}
+.ma-illus{
+  width:64px; height:64px; margin:0 auto 10px; border-radius:18px;
+  background: linear-gradient(180deg, var(--mind-blue), var(--mind-blue-deep));
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="black"><path d="M7 3h10a2 2 0 0 1 2 2v3h-2V5H7v14h10v-3h2v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm9.5 8a.75.75 0 0 1 .75.75v.5h4a.75.75 0 0 1 0 1.5h-4v.5a.75.75 0 0 1-1.28.53l-2-2a.75.75 0 0 1 0-1.06l2-2A.75.75 0 0 1 16.5 11Z"/></svg>') center/70% no-repeat;
+}

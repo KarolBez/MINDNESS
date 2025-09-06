@@ -1,5 +1,6 @@
+// src/app/api/tisaude/consulta/route.ts
 import { NextResponse } from 'next/server';
-import { BASE, authHeadersPatient, getHash } from '../utils';
+import { BASE, buildHeaders, getHash, chooseToken } from '../utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -16,12 +17,13 @@ function isSuccess(raw: any) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const procedimentoId = body.procedimentoId || process.env.NEXT_PUBLIC_TISAUDE_PROCEDIMENTO_ID;
+    const body = await req.json().catch(() => ({}));
+    const procedimentoId =
+      body.procedimentoId || process.env.NEXT_PUBLIC_TISAUDE_PROCEDIMENTO_ID;
     const data = body.data;
     const hora = body.hora;
-    const tipo = body.tipo || process.env.NEXT_PUBLIC_TISAUDE_TIPO_ID || '1';
-    const local = body.local || process.env.NEXT_PUBLIC_TISAUDE_LOCAL_ID || '1';
+    const tipo = String(body.tipo || process.env.NEXT_PUBLIC_TISAUDE_TIPO_ID || '1');
+    const local = String(body.local || process.env.NEXT_PUBLIC_TISAUDE_LOCAL_ID || '1');
 
     if (!procedimentoId || !data || !hora) {
       return NextResponse.json(
@@ -30,24 +32,46 @@ export async function POST(req: Request) {
       );
     }
 
-    const url = `${BASE}/rest/agenda/consulta/${procedimentoId}`;
-    const payload = { data, hora, tipo: String(tipo), local: String(local), hash: getHash() };
+    // ⚠️ Exigir token do paciente (Authorization do cliente)
+    const token = chooseToken(req);
+    if (!token) {
+      return NextResponse.json(
+        { ok: false, error: 'Authorization ausente. Faça login do paciente e envie o Bearer token.' },
+        { status: 401 }
+      );
+    }
+
+    const url = `${BASE}/rest/agenda/consulta/${encodeURIComponent(procedimentoId)}`;
+    const payload = { data, hora, tipo, local, hash: getHash() };
+
+    // Repassa Authorization + Content-Type
+    const headers = buildHeaders(req, {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
 
     const upstream = await fetch(url, {
       method: 'POST',
-      headers: authHeadersPatient(),
+      headers,
       body: JSON.stringify(payload),
       cache: 'no-store',
     });
 
-    const raw = await upstream.json().catch(() => ({}));
+    const text = await upstream.text();
+    let raw: any = null;
+    try {
+      raw = text ? JSON.parse(text) : null;
+    } catch {
+      raw = { raw: text };
+    }
 
     if (!upstream.ok) {
       return NextResponse.json({ ok: false, upstream: raw }, { status: upstream.status });
     }
 
     if (!isSuccess(raw)) {
-      const msg = raw?.mensagem || raw?.message || raw?.error || 'Falha ao criar agendamento';
+      const msg =
+        raw?.mensagem || raw?.message || raw?.error || 'Falha ao criar agendamento';
       return NextResponse.json({ ok: false, error: msg, upstream: raw }, { status: 409 });
     }
 

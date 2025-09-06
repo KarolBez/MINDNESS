@@ -51,9 +51,6 @@ export default function Navbar() {
             <Link href="/#servicos" className="nav-link">Serviços</Link>
           </div>
           <div className="nav-item-button">
-            <Link href="/blog" className="nav-link">Nosso Blog</Link>
-          </div>
-          <div className="nav-item-button">
             <Link href="/login" className="nav-link">Login</Link>
           </div>
         </div>
