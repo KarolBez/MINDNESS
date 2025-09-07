@@ -39,6 +39,10 @@ function capitalizeFirst(s?: string) {
   const low = (s || '').toLowerCase();
   return low.charAt(0).toUpperCase() + low.slice(1);
 }
+function safeParse<T=any>(raw: string | null): T | null {
+  try { return raw ? JSON.parse(raw) as T : null; } catch { return null; }
+}
+function keyAgendaByCpf(cpfDigits: string) { return `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`; }
 
 export default function MinhaAgendaPage() {
   const [itens, setItens] = useState<any[]>([]);
@@ -47,85 +51,89 @@ export default function MinhaAgendaPage() {
 
   const storageKey = useMemo(() => {
     const p = typeof window !== 'undefined'
-      ? JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null')
+      ? safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'))
       : null;
     const cpf = onlyDigits(p?.cpf || '');
-    return cpf ? `TISAUDE_MEUS_AGENDAMENTOS_${cpf}` : null;
+    return cpf ? keyAgendaByCpf(cpf) : null;
   }, []);
 
-  // 👉 Função que seta a flag antes de ir para /agendamento
   const goToAgendar = useCallback(() => {
-    try {
-      sessionStorage.setItem('BYPASS_AGENDAMENTO_REDIRECT', '1');
-    } catch {}
+    try { sessionStorage.setItem('BYPASS_AGENDAMENTO_REDIRECT', '1'); } catch {}
     window.location.href = '/agendamento';
   }, []);
 
   useEffect(() => {
     try {
-      const p: Paciente | null = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
-      setPaciente(p);
+      const p = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
+      const currentCpf = onlyDigits(p?.cpf || '');
+      const currentFlag = localStorage.getItem('TISAUDE_CURRENT_CPF') || '';
 
-      const cpfDigits = p?.cpf ? onlyDigits(p.cpf) : '';
-      const NEW_KEY = cpfDigits ? `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}` : null;
-      const LEGACY_KEY = 'TISAUDE_MEUS_AGENDAMENTOS';
-
-      let data: any[] = [];
-
-      if (NEW_KEY) {
-        const rawNew = localStorage.getItem(NEW_KEY);
-        if (rawNew) {
-          data = JSON.parse(rawNew);
-        } else {
-          const rawLegacy = localStorage.getItem(LEGACY_KEY);
-          if (rawLegacy) {
-            const legacyParsed = JSON.parse(rawLegacy);
-            if (Array.isArray(legacyParsed) && legacyParsed.length) {
-              localStorage.setItem(NEW_KEY, JSON.stringify(legacyParsed));
-              localStorage.removeItem(LEGACY_KEY);
-              data = legacyParsed;
-            }
-          }
-        }
+      if (!p || !currentCpf) {
+        window.location.href = '/login';
+        return;
+      }
+      if (currentFlag && currentFlag !== currentCpf) {
+        // sessão inconsistente → limpa e volta pro login
+        localStorage.removeItem('TISAUDE_PATIENT_BEARER');
+        localStorage.removeItem('TISAUDE_PACIENTE');
+        window.location.href = '/login';
+        return;
       }
 
-      const normalized = (Array.isArray(data) ? data : [])
-        .map((it) => {
-          const dataTopo   = it?.data   as string | undefined;
-          const horaTopo   = it?.hora   as string | undefined;
-          const tipoTopo   = it?.tipo   as string | undefined;
-          const statusTopo = it?.status as string | undefined;
+      setPaciente(p);
 
-          if (dataTopo || horaTopo || tipoTopo || statusTopo) {
-            return {
-              ...it,
-              _dataISO: parseISOorPTBR(dataTopo),
-              _horaHHMM: hhmm(horaTopo),
-              _tipo: capitalizeFirst(tipoTopo || 'Consulta'),
-              _status: capitalizeFirst(statusTopo || 'Marcada'),
-            };
-          }
+      const NEW_KEY = keyAgendaByCpf(currentCpf);
 
-          const ag = it?.data?.agendamento || it?.data?.consulta || it?.data || it?.agendamento;
-          const dia    = ag?.data || ag?.dia || ag?.dataConsulta;
-          const hora   = ag?.horario || ag?.hora;
-          const tipo   = ag?.tipo || ag?.tipoDescricao || 'Consulta';
-          const status = ag?.status || ag?.status_consulta || ag?.situacao || 'Marcada';
+      // Blindagem: nunca removemos a nossa agenda; apenas limpamos legado e agendas de outros CPFs
+      try {
+        localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // legado
+        Object.keys(localStorage)
+          .filter(k => k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') && k !== NEW_KEY)
+          .forEach(k => localStorage.removeItem(k));
+        Object.keys(localStorage)
+          .filter(k => k.startsWith('TISAUDE_PATIENT_BEARER_') && !k.endsWith(currentCpf))
+          .forEach(k => localStorage.removeItem(k));
+      } catch {}
 
+      // Carrega histórico deste CPF SEM regravar/filtrar fora
+      const rawNew = localStorage.getItem(NEW_KEY);
+      const arr = safeParse<any[]>(rawNew) || [];
+
+      // Normaliza apenas para exibição; NÃO altera storage
+      const normalized = (Array.isArray(arr) ? arr : []).map((it) => {
+        // caminhos mais comuns
+        const topoData   = it?.data as string | undefined;
+        const topoHora   = it?.hora as string | undefined;
+        const topoTipo   = it?.tipo as string | undefined;
+        const topoStatus = it?.status as string | undefined;
+
+        if (topoData || topoHora || topoTipo || topoStatus) {
           return {
             ...it,
-            _dataISO: parseISOorPTBR(dia),
-            _horaHHMM: hhmm(hora),
-            _tipo: capitalizeFirst(tipo),
-            _status: capitalizeFirst(status),
+            _dataISO: parseISOorPTBR(topoData),
+            _horaHHMM: hhmm(topoHora),
+            _tipo: capitalizeFirst(topoTipo || 'Consulta'),
+            _status: capitalizeFirst(topoStatus || 'Marcada'),
           };
-        })
-        .filter((it) => it._dataISO || it._horaHHMM);
+        }
+
+        // caminhos aninhados
+        const ag = it?.data?.agendamento || it?.data?.consulta || it?.data || it?.agendamento;
+        const dia    = ag?.data || ag?.dia || ag?.dataConsulta || ag?.date;
+        const hora   = ag?.horario || ag?.hora || ag?.time;
+        const tipo   = ag?.tipo || ag?.tipoDescricao || ag?.descricao || 'Consulta';
+        const status = ag?.status || ag?.status_consulta || ag?.situacao || 'Marcada';
+
+        return {
+          ...it,
+          _dataISO: parseISOorPTBR(dia),
+          _horaHHMM: hhmm(hora),
+          _tipo: capitalizeFirst(tipo),
+          _status: capitalizeFirst(status),
+        };
+      });
 
       setItens(normalized);
-    } catch {
-      setItens([]);
-      setPaciente(null);
     } finally {
       setLoaded(true);
     }
@@ -135,7 +143,7 @@ export default function MinhaAgendaPage() {
     if (!storageKey) return;
     if (!confirm('Remover este agendamento do histórico?')) return;
 
-    const all = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const all = safeParse<any[]>(localStorage.getItem(storageKey)) || [];
     if (!Array.isArray(all)) return;
     all.splice(idx, 1);
     localStorage.setItem(storageKey, JSON.stringify(all));
@@ -155,9 +163,7 @@ export default function MinhaAgendaPage() {
   return (
     <div className="ma-wrap">
       <header className="ma-hero">
-        <div>
-          <h1 className="ma-tt">Minha agenda</h1>
-        </div>
+        <div><h1 className="ma-tt">Minha agenda</h1></div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="ma-btn ma-btn-primary" onClick={goToAgendar}>
             + Marcar novo agendamento
@@ -192,7 +198,6 @@ export default function MinhaAgendaPage() {
           <div className="ma-empty ma-card--glass">
             <div className="ma-illus" />
             <p>Você ainda não possui agendamentos.</p>
-            {/* ⬇️ também seta a flag aqui */}
             <button className="ma-btn ma-btn-outline" onClick={goToAgendar}>
               Marcar novo agendamento
             </button>

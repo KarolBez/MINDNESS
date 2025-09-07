@@ -6,20 +6,42 @@ import { useState, useMemo, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
-function onlyDigits(s: string) {
-  return (s || '').replace(/\D+/g, '');
-}
+function onlyDigits(s: string) { return (s || '').replace(/\D+/g, ''); }
 function maskCPF(v: string) {
   const d = onlyDigits(v).slice(0, 11);
-  const p1 = d.slice(0, 3);
-  const p2 = d.slice(3, 6);
-  const p3 = d.slice(6, 9);
-  const p4 = d.slice(9, 11);
+  const p1 = d.slice(0, 3), p2 = d.slice(3, 6), p3 = d.slice(6, 9), p4 = d.slice(9, 11);
   let out = p1;
   if (p2) out += '.' + p2;
   if (p3) out += '.' + p3;
   if (p4) out += '-' + p4;
   return out;
+}
+function keyAgendaByCpf(cpfDigits: string) { return `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`; }
+function keyBearerByCpf(cpfDigits: string) { return `TISAUDE_PATIENT_BEARER_${cpfDigits}`; }
+
+/** Remove dados de outros CPFs e chaves legadas */
+function purgeForeignData(currentCpfDigits: string) {
+  const myAgendaKey = keyAgendaByCpf(currentCpfDigits);
+  const myBearerKey = keyBearerByCpf(currentCpfDigits);
+  try {
+    localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // legado
+    // agendas de outros CPFs
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') && k !== myAgendaKey)
+      .forEach(k => localStorage.removeItem(k));
+    // bearers de outros CPFs
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('TISAUDE_PATIENT_BEARER_') && k !== myBearerKey)
+      .forEach(k => localStorage.removeItem(k));
+  } catch {}
+}
+
+/** Seta bearer namespaced + (opcional) global para compat */
+function setBearerForCpf(cpfDigits: string, token: string) {
+  try {
+    localStorage.setItem('TISAUDE_PATIENT_BEARER', token); // compat opcional
+    localStorage.setItem(keyBearerByCpf(cpfDigits), token); // oficial por CPF
+  } catch {}
 }
 
 export default function LoginPage() {
@@ -51,23 +73,34 @@ export default function LoginPage() {
         body: JSON.stringify(payload),
       });
 
-      const j = await res.json().catch(() => ({}));
+      const j = await res.json().catch(() => ({} as any));
       if (!res.ok || !j?.ok) throw new Error(j?.error || 'Falha no login');
 
-      localStorage.setItem('TISAUDE_PATIENT_BEARER', j.data.access_token);
-      localStorage.setItem('TISAUDE_PACIENTE', JSON.stringify(j.data.paciente));
+      // zera sessão anterior
+      try {
+        localStorage.removeItem('TISAUDE_PATIENT_BEARER');
+        localStorage.removeItem('TISAUDE_PACIENTE');
+        sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
+      } catch {}
 
-      const hist = JSON.parse(localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS') || '[]');
-      const hasHistory = Array.isArray(hist) && hist.length > 0;
+      // grava sessão atual
+      localStorage.setItem('TISAUDE_PACIENTE', JSON.stringify(j.data.paciente));
+      localStorage.setItem('TISAUDE_CURRENT_CPF', cpfDigits);
+      setBearerForCpf(cpfDigits, j.data.access_token);
+
+      // limpa dados de outros CPFs e legado
+      purgeForeignData(cpfDigits);
 
       toast.success('Login realizado!');
-      liveRef.current!.textContent = 'Login realizado com sucesso.';
-      router.push(hasHistory ? '/minha-agenda' : '/agendamento');
+      if (liveRef.current) liveRef.current.textContent = 'Login realizado com sucesso.';
+
+      // Regra: SEMPRE ir para a MINHA AGENDA após login
+      router.replace('/minha-agenda');
     } catch (err: any) {
       const msg = err?.message || 'Erro ao logar paciente';
       setInlineError(msg);
       toast.error(msg);
-      liveRef.current!.textContent = msg;
+      if (liveRef.current) liveRef.current.textContent = msg;
     } finally {
       setLoadingPaciente(false);
     }
@@ -84,15 +117,13 @@ export default function LoginPage() {
         <p>Soluções em saúde emocional para empresas</p>
 
         <nav className="login-links" aria-label="Ações rápidas">
-          <Link href="/agendamento">📅 Fazer Agendamento</Link>
           <Link href="/primeiro-acesso">🔑 Primeiro Acesso</Link>
         </nav>
 
-        {/* Login do Paciente */}
         <section className="card bloco login-paciente" aria-labelledby="lp-title">
           <h2 id="lp-title">Login do Paciente</h2>
 
-          <form onSubmit={onLoginPaciente} className="form" noValidate>
+        <form onSubmit={onLoginPaciente} className="form" noValidate>
             <label htmlFor="cpf">CPF</label>
             <input
               id="cpf"
@@ -121,7 +152,7 @@ export default function LoginPage() {
             </button>
 
             <p id="cpf-hint" className="hint">
-              No primeiro login, você será levado ao agendamento.
+              Após o login, você será levado para a sua agenda. De lá você marca a consulta.
             </p>
           </form>
           <div aria-live="polite" aria-atomic="true" className="sr-live" ref={liveRef} />

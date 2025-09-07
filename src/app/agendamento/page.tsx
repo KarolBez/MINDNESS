@@ -4,8 +4,6 @@ import { useRouter } from 'next/navigation';
 import './agendamento.css';
 import VoltarHomeButton from '@/components/VoltaHomeButton';
 import { toast, Toaster } from 'react-hot-toast';
-import { saveBookingToHistoryPerCPF } from '@/helpers/agendamentoHistory';
-
 
 export type Prof = {
   id: string | number;
@@ -19,21 +17,19 @@ type ApiErr = { ok?: false; error?: string; [k: string]: any };
 
 type CriarAgendamentoPayload = {
   procedimentoId: string;
-  data: string; 
-  hora: string; 
+  data: string; // yyyy-mm-dd
+  hora: string; // HH:mm[:ss]
 };
 
 const PROC_ID_DEFAULT = process.env.NEXT_PUBLIC_TISAUDE_PROCEDIMENTO_ID || '';
 
-
-
 function onlyDigits(s: string) { return (s || '').replace(/\D+/g, ''); }
-
 async function safeJson(res: Response): Promise<any> {
   try { return await res.json(); } catch { return {}; }
 }
+function bearerKeyByCpf(cpf: string) { return `TISAUDE_PATIENT_BEARER_${cpf}`; }
 
-
+/** Headers com bearer isolado por CPF + X-Patient-CPF */
 function authHeaders(): Record<string, string> {
   const paciente = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null')
@@ -42,11 +38,11 @@ function authHeaders(): Record<string, string> {
 
   let token = '';
   if (cpf) {
-    token = localStorage.getItem(`TISAUDE_PATIENT_BEARER_${cpf}`) || '';
+    token = localStorage.getItem(bearerKeyByCpf(cpf)) || '';
     if (!token) {
       const legacy = localStorage.getItem('TISAUDE_PATIENT_BEARER') || '';
       if (legacy) {
-        localStorage.setItem(`TISAUDE_PATIENT_BEARER_${cpf}`, legacy);
+        localStorage.setItem(bearerKeyByCpf(cpf), legacy);
         token = legacy;
       }
     }
@@ -60,18 +56,27 @@ function authHeaders(): Record<string, string> {
   return h;
 }
 
-
+/** Blindagem geral de sessão / legado */
 function ensureAuthIsolation() {
   const p = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
   const cpf = onlyDigits(p?.cpf || '');
   const last = localStorage.getItem('TISAUDE_LAST_CPF') || '';
+
+  localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // legado
+
   if (last && cpf && last !== cpf) {
-    localStorage.removeItem('TISAUDE_PATIENT_BEARER');
-    localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS');
+    localStorage.removeItem('TISAUDE_PATIENT_BEARER'); // limpa bearer global
   }
   if (cpf) localStorage.setItem('TISAUDE_LAST_CPF', cpf);
+
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('TISAUDE_PATIENT_BEARER_') && !k.endsWith(cpf))
+      .forEach(k => localStorage.removeItem(k));
+  } catch {}
 }
 
+/** Utils de normalização */
 function toArraySafe(input: any): any[] {
   if (Array.isArray(input)) return input;
   if (!input || typeof input !== 'object') return [];
@@ -104,19 +109,15 @@ function capitalizeFirst(s: string) {
   const low = String(s).toLowerCase();
   return low.charAt(0).toUpperCase() + low.slice(1);
 }
-
-
 function normalizeBooking(fromApi: any, fallbackProcId?: string) {
   const d = fromApi?.data || fromApi;
   const ag = d?.agendamento || d?.appointment || d;
-
 
   const appointmentId =
     ag?.id || ag?.agendamento_id || ag?.codigo || ag?.cod_agendamento || ag?.ID || ag?.uuid || ag?.sid || ag?.schedule_id || '';
 
   const procedimentoId =
     ag?.procedimento_id || ag?.procedimentoId || fallbackProcId || '';
-
 
   const rawDate =
     ag?.data || ag?.data_consulta || ag?.date || ag?.dia || ag?.when || ag?.inicio || ag?.startDate;
@@ -159,17 +160,40 @@ function normalizeBooking(fromApi: any, fallbackProcId?: string) {
   return {
     appointmentId: String(appointmentId || ''),
     procedimentoId: procedimentoId ? String(procedimentoId) : '',
-    data: dateISO,           
-    hora: timeHHmm,          
+    data: dateISO,
+    hora: timeHHmm,
     tipo: capitalizeFirst(rawTipo || 'Consulta'),
     status: statusNorm || 'Marcada',
     raw: fromApi,
   };
 }
 
+/** Histórico namespaced por CPF */
+function saveBookingToHistoryPerCPF(apiResp: any, procedimentoId: string, chosenDate: string, chosenTime: string) {
+  try {
+    const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
+    const cpfDigits = onlyDigits(paciente?.cpf || '');
+    if (!cpfDigits) return;
 
+    const KEY = `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`;
+    const hist = JSON.parse(localStorage.getItem(KEY) || '[]');
+    const normalized = normalizeBooking(apiResp, procedimentoId);
+    const ensured = {
+      ...normalized,
+      procedimentoId: normalized.procedimentoId || procedimentoId,
+      data: normalized.data || chosenDate,
+      hora: normalized.hora || (chosenTime.length === 5 ? chosenTime : (chosenTime || '').slice(0,5)),
+      tipo: normalized.tipo || 'Consulta',
+      ownerCpf: cpfDigits,
+    };
+    const newHist = [{ criadoEm: new Date().toISOString(), ...ensured }, ...(Array.isArray(hist) ? hist : [])].slice(0, 50);
+    localStorage.setItem(KEY, JSON.stringify(newHist));
 
-async function criarAgendamento(payload: CriarAgendamentoPayload): Promise<ApiOk | never> {
+    localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // mata legado
+  } catch {}
+}
+
+async function criarAgendamento(payload: CriarAgendamentoPayload): Promise<ApiOk> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...authHeaders(),
@@ -180,17 +204,13 @@ async function criarAgendamento(payload: CriarAgendamentoPayload): Promise<ApiOk
     body: JSON.stringify(payload),
   });
   const j: ApiOk | ApiErr = await safeJson(res);
+
   if (!res.ok || !('ok' in j) || !j.ok) {
     const msg = (j as ApiErr)?.error || 'Falha ao criar agendamento';
     throw new Error(msg);
   }
-  try {
-    await Promise.resolve(saveBookingToHistoryPerCPF((j as any).data));
-  } catch {}
-  return j;
+  return j as ApiOk;
 }
-
-
 
 export default function Agendamento() {
   const router = useRouter();
@@ -212,26 +232,13 @@ export default function Agendamento() {
   useEffect(() => {
     ensureAuthIsolation();
 
-  
+    // /agendamento só abre via botão da agenda
     const bypass = sessionStorage.getItem('BYPASS_AGENDAMENTO_REDIRECT') === '1';
-    if (bypass) {
-      sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
-    } else {
-      
-      try {
-        const p = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
-        const cpf = onlyDigits(p?.cpf || '');
-        if (cpf) {
-          const key = `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
-          const raw = localStorage.getItem(key);
-          const arr = raw ? JSON.parse(raw) : [];
-          if (Array.isArray(arr) && arr.length > 0) {
-            router.replace('/minha-agenda');
-            return;
-          }
-        }
-      } catch {}
+    if (!bypass) {
+      router.replace('/minha-agenda');
+      return;
     }
+    sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
 
     (async () => {
       try {
@@ -241,8 +248,8 @@ export default function Agendamento() {
         const json = await safeJson(res);
         if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao listar profissionais');
 
-        const raw = toArraySafe(json.items);
-        const arr = pickNestedObjectArray(raw);
+        const base = toArraySafe(json.items);
+        const arr = pickNestedObjectArray(base);
 
         const list: Prof[] = arr
           .filter((p: any) => p && typeof p === 'object' && !Array.isArray(p))
@@ -260,19 +267,6 @@ export default function Agendamento() {
       } finally {
         setLoadingProfs(false);
       }
-
-    
-      try {
-        const arr = JSON.parse(localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS') || '[]');
-        const cleaned = (Array.isArray(arr) ? arr : []).filter(
-          (it: any) =>
-            (it?.data && it?.hora) ||
-            (it?.raw && (it?.raw.data?.agendamento || it?.raw.data?.consulta))
-        );
-        if (cleaned.length !== arr.length) {
-          localStorage.setItem('TISAUDE_MEUS_AGENDAMENTOS', JSON.stringify(cleaned));
-        }
-      } catch {}
     })();
   }, [router]);
 
@@ -342,33 +336,13 @@ export default function Agendamento() {
       } else {
         toast.success('Agendamento criado com sucesso!');
 
+        // salva no histórico do CPF atual
+        saveBookingToHistoryPerCPF(apiResp, procedimentoId, dataSel, horaSel);
 
-        try {
-          const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
-          const cpfDigits = onlyDigits(paciente?.cpf || '');
-          if (!cpfDigits) throw new Error('CPF inválido ou não encontrado');
-          const KEY = `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`;
-
-          const hist = JSON.parse(localStorage.getItem(KEY) || '[]');
-          const normalized = normalizeBooking(apiResp, procedimentoId);
-          const ensured = {
-            ...normalized,
-            procedimentoId: normalized.procedimentoId || procedimentoId,
-            data: normalized.data || dataSel,
-            hora: normalized.hora || horaSel,
-            tipo: normalized.tipo || 'Consulta',
-          };
-          hist.unshift({ criadoEm: new Date().toISOString(), ...ensured });
-          localStorage.setItem(KEY, JSON.stringify(hist.slice(0, 50)));
-
-        
-          localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS');
-        } catch (e) {
-          console.error('Falha ao salvar no histórico por CPF:', e);
-        }
-
+        // limpa seleção
         setHoraSel(''); setDataSel(''); setProfissional(null);
 
+        // link extra (pagamento/confirm)
         const link = (apiResp as any)?.data?.agendamento?.link_agendamento;
         if (link) window.open(link, '_blank');
 
@@ -376,6 +350,7 @@ export default function Agendamento() {
         return;
       }
 
+      // recarrega horários se conflitou
       await selecionarData(dataSel);
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao agendar consulta');
