@@ -16,31 +16,51 @@ function maskCPF(v: string) {
   if (p4) out += '-' + p4;
   return out;
 }
-function keyAgendaByCpf(cpfDigits: string) { return `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`; }
-function keyBearerByCpf(cpfDigits: string) { return `TISAUDE_PATIENT_BEARER_${cpfDigits}`; }
+function safeParse<T=any>(raw: string | null): T | null { try { return raw ? JSON.parse(raw) as T : null; } catch { return null; } }
+const keyAgenda = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
+const keyAgendaBak = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
+const keyBearer = (cpf: string) => `TISAUDE_PATIENT_BEARER_${cpf}`;
 
-/** Remove dados de outros CPFs e chaves legadas */
-function purgeForeignData(currentCpfDigits: string) {
-  const myAgendaKey = keyAgendaByCpf(currentCpfDigits);
-  const myBearerKey = keyBearerByCpf(currentCpfDigits);
+function migrateLegacyToCpf(cpf: string) {
   try {
-    localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // legado
-    // agendas de outros CPFs
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') && k !== myAgendaKey)
-      .forEach(k => localStorage.removeItem(k));
-    // bearers de outros CPFs
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('TISAUDE_PATIENT_BEARER_') && k !== myBearerKey)
-      .forEach(k => localStorage.removeItem(k));
+    const legacyRaw = localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS');
+    if (!legacyRaw) return;
+    const legacyArr = safeParse<any[]>(legacyRaw) || [];
+    const dst = keyAgenda(cpf);
+    const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
+    const merged = [...legacyArr, ...curr];
+    if (merged.length) {
+      localStorage.setItem(dst, JSON.stringify(merged.slice(0, 500)));
+      localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(merged.slice(0, 500)));
+    }
+    // NÃO apagamos o legado aqui.
   } catch {}
 }
 
-/** Seta bearer namespaced + (opcional) global para compat */
-function setBearerForCpf(cpfDigits: string, token: string) {
+function purgeOtherCpfs(currentCpf: string) {
   try {
-    localStorage.setItem('TISAUDE_PATIENT_BEARER', token); // compat opcional
-    localStorage.setItem(keyBearerByCpf(cpfDigits), token); // oficial por CPF
+    const allow = new Set([
+      'TISAUDE_PACIENTE',
+      'TISAUDE_PATIENT_BEARER',
+      'TISAUDE_CURRENT_CPF',
+      keyAgenda(currentCpf),
+      keyAgendaBak(currentCpf),
+      keyBearer(currentCpf),
+      'TISAUDE_MEUS_AGENDAMENTOS' // legado mantido
+    ]);
+    for (const k of Object.keys(localStorage)) {
+      // Não mexa em legado; só limpe dados namespaced de outros CPFs
+      if ((k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') || k.startsWith('TISAUDE_PATIENT_BEARER_')) && !allow.has(k)) {
+        localStorage.removeItem(k);
+      }
+    }
+  } catch {}
+}
+
+function setBearerForCpf(cpf: string, token: string) {
+  try {
+    localStorage.setItem('TISAUDE_PATIENT_BEARER', token); // compat
+    localStorage.setItem(keyBearer(cpf), token);           // por CPF
   } catch {}
 }
 
@@ -57,50 +77,44 @@ export default function LoginPage() {
   async function onLoginPaciente(e: React.FormEvent) {
     e.preventDefault();
     setInlineError(null);
-
-    if (!cpfOk) {
-      setInlineError('Informe um CPF válido (11 dígitos).');
-      return;
-    }
+    if (!cpfOk) { setInlineError('Informe um CPF válido (11 dígitos).'); return; }
 
     try {
       setLoadingPaciente(true);
-      const payload = { cpf: cpfDigits };
-
       const res = await fetch('/api/tisaude/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ cpf: cpfDigits }),
       });
-
       const j = await res.json().catch(() => ({} as any));
       if (!res.ok || !j?.ok) throw new Error(j?.error || 'Falha no login');
 
-      // zera sessão anterior
+      // zera mínimos (NÃO apaga histórico/legado)
       try {
-        localStorage.removeItem('TISAUDE_PATIENT_BEARER');
         localStorage.removeItem('TISAUDE_PACIENTE');
         sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
       } catch {}
 
-      // grava sessão atual
-      localStorage.setItem('TISAUDE_PACIENTE', JSON.stringify(j.data.paciente));
+      localStorage.setItem('TISAUDE_PACIENTE', JSON.stringify(j.data.paciente || { cpf: cpfDigits }));
       localStorage.setItem('TISAUDE_CURRENT_CPF', cpfDigits);
       setBearerForCpf(cpfDigits, j.data.access_token);
 
-      // limpa dados de outros CPFs e legado
-      purgeForeignData(cpfDigits);
+      // migra histórico legado -> cpf (sem perdas) e cria backup
+      migrateLegacyToCpf(cpfDigits);
+
+      // limpa chaves de outros CPFs, preservando nosso histórico/backup e legado
+      purgeOtherCpfs(cpfDigits);
 
       toast.success('Login realizado!');
-      if (liveRef.current) liveRef.current.textContent = 'Login realizado com sucesso.';
+      liveRef.current && (liveRef.current.textContent = 'Login realizado com sucesso.');
 
-      // Regra: SEMPRE ir para a MINHA AGENDA após login
+      // Sempre: Minha Agenda
       router.replace('/minha-agenda');
     } catch (err: any) {
       const msg = err?.message || 'Erro ao logar paciente';
       setInlineError(msg);
       toast.error(msg);
-      if (liveRef.current) liveRef.current.textContent = msg;
+      liveRef.current && (liveRef.current.textContent = msg);
     } finally {
       setLoadingPaciente(false);
     }
@@ -111,9 +125,7 @@ export default function LoginPage() {
       <Toaster position="top-right" />
       <div className="login-box">
         <VoltarHomeButton />
-        <h1>
-          Bem-vindo à <span className="highlight-blue">Mindness</span>
-        </h1>
+        <h1>Bem-vindo à <span className="highlight-blue">Mindness</span></h1>
         <p>Soluções em saúde emocional para empresas</p>
 
         <nav className="login-links" aria-label="Ações rápidas">
@@ -123,7 +135,7 @@ export default function LoginPage() {
         <section className="card bloco login-paciente" aria-labelledby="lp-title">
           <h2 id="lp-title">Login do Paciente</h2>
 
-        <form onSubmit={onLoginPaciente} className="form" noValidate>
+          <form onSubmit={onLoginPaciente} className="form" noValidate>
             <label htmlFor="cpf">CPF</label>
             <input
               id="cpf"
@@ -143,17 +155,11 @@ export default function LoginPage() {
 
             {inlineError && <div className="field-error" role="alert">{inlineError}</div>}
 
-            <button
-              type="submit"
-              disabled={!cpfOk || loadingPaciente}
-              className={`btn primario ${loadingPaciente ? 'is-loading' : ''}`}
-            >
+            <button type="submit" disabled={!cpfOk || loadingPaciente} className={`btn primario ${loadingPaciente ? 'is-loading' : ''}`}>
               {loadingPaciente ? 'Entrando...' : 'Entrar'}
             </button>
 
-            <p id="cpf-hint" className="hint">
-              Após o login, você será levado para a sua agenda. De lá você marca a consulta.
-            </p>
+            <p id="cpf-hint" className="hint">Após o login, você será levado para a sua agenda. De lá você marca a consulta.</p>
           </form>
           <div aria-live="polite" aria-atomic="true" className="sr-live" ref={liveRef} />
         </section>

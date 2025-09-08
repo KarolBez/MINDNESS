@@ -20,10 +20,7 @@ function parseISOorPTBR(dateStr?: string): string {
   if (!dateStr) return '';
   const s = String(dateStr);
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
-    const [dd, mm, yy] = s.split('/');
-    return `${yy}-${mm}-${dd}`;
-  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { const [dd, mm, yy] = s.split('/'); return `${yy}-${mm}-${dd}`; }
   const dt = new Date(s);
   return isNaN(+dt) ? '' : dt.toISOString().slice(0, 10);
 }
@@ -34,15 +31,42 @@ function hhmm(timeStr?: string): string {
   const m = s.match(/(\d{1,2}:\d{2})/);
   return m ? (m[1].length === 4 ? '0' + m[1] : m[1]) : '';
 }
-function capitalizeFirst(s?: string) {
-  if (!s) return '';
-  const low = (s || '').toLowerCase();
-  return low.charAt(0).toUpperCase() + low.slice(1);
+function capitalizeFirst(s?: string) { if (!s) return ''; const low = (s || '').toLowerCase(); return low.charAt(0).toUpperCase() + low.slice(1); }
+function safeParse<T=any>(raw: string | null): T | null { try { return raw ? JSON.parse(raw) as T : null; } catch { return null; } }
+
+const keyAgenda    = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
+const keyAgendaBak = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
+
+/** Recupera do backup caso a chave principal esteja vazia/corrompida */
+function ensureAgendaWithBackup(cpf: string): any[] {
+  const k = keyAgenda(cpf);
+  const kb = keyAgendaBak(cpf);
+  const main = safeParse<any[]>(localStorage.getItem(k));
+  if (Array.isArray(main) && main.length) return main;
+
+  const bak = safeParse<any[]>(localStorage.getItem(kb));
+  if (Array.isArray(bak) && bak.length) {
+    try { localStorage.setItem(k, JSON.stringify(bak)); } catch {}
+    return bak;
+  }
+  return Array.isArray(main) ? main : [];
 }
-function safeParse<T=any>(raw: string | null): T | null {
-  try { return raw ? JSON.parse(raw) as T : null; } catch { return null; }
+
+/** Migra legado para a chave por CPF e faz backup */
+function migrateLegacyToCpf(cpf: string) {
+  try {
+    const legacyRaw = localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS');
+    if (!legacyRaw) return;
+    const legacyArr = safeParse<any[]>(legacyRaw) || [];
+    const dst = keyAgenda(cpf);
+    const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
+    const merged = [...legacyArr, ...curr];
+    if (merged.length) {
+      localStorage.setItem(dst, JSON.stringify(merged.slice(0, 500)));
+      localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(merged.slice(0, 500)));
+    }
+  } catch {}
 }
-function keyAgendaByCpf(cpfDigits: string) { return `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`; }
 
 export default function MinhaAgendaPage() {
   const [itens, setItens] = useState<any[]>([]);
@@ -50,11 +74,9 @@ export default function MinhaAgendaPage() {
   const [loaded, setLoaded] = useState(false);
 
   const storageKey = useMemo(() => {
-    const p = typeof window !== 'undefined'
-      ? safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'))
-      : null;
+    const p = typeof window !== 'undefined' ? safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE')) : null;
     const cpf = onlyDigits(p?.cpf || '');
-    return cpf ? keyAgendaByCpf(cpf) : null;
+    return cpf ? keyAgenda(cpf) : null;
   }, []);
 
   const goToAgendar = useCallback(() => {
@@ -68,40 +90,22 @@ export default function MinhaAgendaPage() {
       const currentCpf = onlyDigits(p?.cpf || '');
       const currentFlag = localStorage.getItem('TISAUDE_CURRENT_CPF') || '';
 
-      if (!p || !currentCpf) {
-        window.location.href = '/login';
-        return;
-      }
+      if (!p || !currentCpf) { window.location.href = '/login'; return; }
       if (currentFlag && currentFlag !== currentCpf) {
-        // sessão inconsistente → limpa e volta pro login
-        localStorage.removeItem('TISAUDE_PATIENT_BEARER');
         localStorage.removeItem('TISAUDE_PACIENTE');
         window.location.href = '/login';
         return;
       }
-
       setPaciente(p);
 
-      const NEW_KEY = keyAgendaByCpf(currentCpf);
+      // 1) migra legado → cpf (sem apagar) e grava backup
+      migrateLegacyToCpf(currentCpf);
 
-      // Blindagem: nunca removemos a nossa agenda; apenas limpamos legado e agendas de outros CPFs
-      try {
-        localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // legado
-        Object.keys(localStorage)
-          .filter(k => k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') && k !== NEW_KEY)
-          .forEach(k => localStorage.removeItem(k));
-        Object.keys(localStorage)
-          .filter(k => k.startsWith('TISAUDE_PATIENT_BEARER_') && !k.endsWith(currentCpf))
-          .forEach(k => localStorage.removeItem(k));
-      } catch {}
+      // 2) carrega garantindo recuperação pelo backup
+      const arr = ensureAgendaWithBackup(currentCpf);
 
-      // Carrega histórico deste CPF SEM regravar/filtrar fora
-      const rawNew = localStorage.getItem(NEW_KEY);
-      const arr = safeParse<any[]>(rawNew) || [];
-
-      // Normaliza apenas para exibição; NÃO altera storage
+      // 3) normalização só para exibição (não regrava)
       const normalized = (Array.isArray(arr) ? arr : []).map((it) => {
-        // caminhos mais comuns
         const topoData   = it?.data as string | undefined;
         const topoHora   = it?.hora as string | undefined;
         const topoTipo   = it?.tipo as string | undefined;
@@ -117,7 +121,6 @@ export default function MinhaAgendaPage() {
           };
         }
 
-        // caminhos aninhados
         const ag = it?.data?.agendamento || it?.data?.consulta || it?.data || it?.agendamento;
         const dia    = ag?.data || ag?.dia || ag?.dataConsulta || ag?.date;
         const hora   = ag?.horario || ag?.hora || ag?.time;
@@ -143,19 +146,25 @@ export default function MinhaAgendaPage() {
     if (!storageKey) return;
     if (!confirm('Remover este agendamento do histórico?')) return;
 
+    const cpf = onlyDigits(paciente?.cpf || '');
     const all = safeParse<any[]>(localStorage.getItem(storageKey)) || [];
     if (!Array.isArray(all)) return;
     all.splice(idx, 1);
-    localStorage.setItem(storageKey, JSON.stringify(all));
+    const clipped = all.slice(0, 500);
+    localStorage.setItem(storageKey, JSON.stringify(clipped));
+    // mantém o backup sincronizado
+    if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
     setItens((prev) => prev.filter((_, i) => i !== idx));
-  }, [storageKey]);
+  }, [storageKey, paciente]);
 
   const apagarTudo = useCallback(() => {
     if (!storageKey) return;
     if (!confirm('Apagar TODO o histórico deste usuário?')) return;
+    const cpf = onlyDigits(paciente?.cpf || '');
     localStorage.removeItem(storageKey);
+    if (cpf) localStorage.removeItem(keyAgendaBak(cpf));
     setItens([]);
-  }, [storageKey]);
+  }, [storageKey, paciente]);
 
   const cpfFmt = useMemo(() => formatCPF(paciente?.cpf), [paciente]);
   const celFmt = useMemo(() => formatPhone(paciente?.celular), [paciente]);
@@ -165,22 +174,15 @@ export default function MinhaAgendaPage() {
       <header className="ma-hero">
         <div><h1 className="ma-tt">Minha agenda</h1></div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="ma-btn ma-btn-primary" onClick={goToAgendar}>
-            + Marcar novo agendamento
-          </button>
+          <button className="ma-btn ma-btn-primary" onClick={goToAgendar}>+ Marcar novo agendamento</button>
           {itens.length > 0 && (
-            <button className="ma-btn ma-btn-outline" onClick={apagarTudo} title="Apagar tudo">
-              Apagar tudo
-            </button>
+            <button className="ma-btn ma-btn-outline" onClick={apagarTudo} title="Apagar tudo">Apagar tudo</button>
           )}
         </div>
       </header>
 
       <section className="ma-card ma-card--glass">
-        <div className="ma-card__head">
-          <h2 className="ma-card__title">Seus dados</h2>
-        </div>
-
+        <div className="ma-card__head"><h2 className="ma-card__title">Seus dados</h2></div>
         {paciente ? (
           <div className="ma-grid">
             <div className="ma-field"><span className="ma-label">Nome</span><span className="ma-value">{paciente.nome || '—'}</span></div>
@@ -198,9 +200,7 @@ export default function MinhaAgendaPage() {
           <div className="ma-empty ma-card--glass">
             <div className="ma-illus" />
             <p>Você ainda não possui agendamentos.</p>
-            <button className="ma-btn ma-btn-outline" onClick={goToAgendar}>
-              Marcar novo agendamento
-            </button>
+            <button className="ma-btn ma-btn-outline" onClick={goToAgendar}>Marcar novo agendamento</button>
           </div>
         ) : (
           <ul className="ma-ul">
@@ -214,30 +214,14 @@ export default function MinhaAgendaPage() {
               return (
                 <li key={idx} className="ma-card ma-card--glass ma-item">
                   <div className="ma-item__head">
-                    <div className="ma-created">
-                      Registrado em {criado ? criado.toLocaleString() : '—'}
-                    </div>
-
+                    <div className="ma-created">Registrado em {criado ? criado.toLocaleString() : '—'}</div>
                     <div className="ma-chips">
-                      <span className="ma-chip ma-chip--outline">
-                        Data: {dataISO ? new Date(dataISO).toLocaleDateString() : '—'}
-                      </span>
-                      <span className="ma-chip ma-chip--amber-outline">
-                        Hora: {horaHHMM || '—'}
-                      </span>
-                      <span className="ma-chip ma-chip--mint-outline">
-                        Tipo: {tipo}
-                      </span>
-                      <span className="ma-chip ma-chip--blue-outline">
-                        Status: {status}
-                      </span>
+                      <span className="ma-chip ma-chip--outline">Data: {dataISO ? new Date(dataISO).toLocaleDateString() : '—'}</span>
+                      <span className="ma-chip ma-chip--amber-outline">Hora: {horaHHMM || '—'}</span>
+                      <span className="ma-chip ma-chip--mint-outline">Tipo: {tipo}</span>
+                      <span className="ma-chip ma-chip--blue-outline">Status: {status}</span>
                     </div>
-
-                    <div>
-                      <button className="ma-btn ma-btn-danger" onClick={() => excluirItem(idx)}>
-                        Excluir
-                      </button>
-                    </div>
+                    <div><button className="ma-btn ma-btn-danger" onClick={() => excluirItem(idx)}>Excluir</button></div>
                   </div>
                 </li>
               );

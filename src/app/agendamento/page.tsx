@@ -5,78 +5,40 @@ import './agendamento.css';
 import VoltarHomeButton from '@/components/VoltaHomeButton';
 import { toast, Toaster } from 'react-hot-toast';
 
-export type Prof = {
-  id: string | number;
-  nome?: string;
-  nome_profissional?: string;
-  foto?: string | null;
-};
-
+export type Prof = { id: string | number; nome?: string; nome_profissional?: string; foto?: string | null; };
 type ApiOk<T = any> = { ok: true; [k: string]: any } & T;
 type ApiErr = { ok?: false; error?: string; [k: string]: any };
 
-type CriarAgendamentoPayload = {
-  procedimentoId: string;
-  data: string; // yyyy-mm-dd
-  hora: string; // HH:mm[:ss]
-};
-
+type CriarAgendamentoPayload = { procedimentoId: string; data: string; hora: string; };
 const PROC_ID_DEFAULT = process.env.NEXT_PUBLIC_TISAUDE_PROCEDIMENTO_ID || '';
 
 function onlyDigits(s: string) { return (s || '').replace(/\D+/g, ''); }
-async function safeJson(res: Response): Promise<any> {
-  try { return await res.json(); } catch { return {}; }
-}
-function bearerKeyByCpf(cpf: string) { return `TISAUDE_PATIENT_BEARER_${cpf}`; }
+async function safeJson(res: Response): Promise<any> { try { return await res.json(); } catch { return {}; } }
+const bearerKey = (cpf: string) => `TISAUDE_PATIENT_BEARER_${cpf}`;
+const keyAgenda    = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
+const keyAgendaBak = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
 
-/** Headers com bearer isolado por CPF + X-Patient-CPF */
 function authHeaders(): Record<string, string> {
-  const paciente = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null')
-    : null;
+  const paciente = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null') : null;
   const cpf = onlyDigits(paciente?.cpf || '');
-
   let token = '';
-  if (cpf) {
-    token = localStorage.getItem(bearerKeyByCpf(cpf)) || '';
-    if (!token) {
-      const legacy = localStorage.getItem('TISAUDE_PATIENT_BEARER') || '';
-      if (legacy) {
-        localStorage.setItem(bearerKeyByCpf(cpf), legacy);
-        token = legacy;
-      }
-    }
-  } else {
-    token = localStorage.getItem('TISAUDE_PATIENT_BEARER') || '';
-  }
-
+  if (cpf) token = localStorage.getItem(bearerKey(cpf)) || localStorage.getItem('TISAUDE_PATIENT_BEARER') || '';
+  else token = localStorage.getItem('TISAUDE_PATIENT_BEARER') || '';
   const h: Record<string, string> = {};
   if (token) h['Authorization'] = `Bearer ${token}`;
   if (cpf)  h['X-Patient-CPF'] = cpf;
   return h;
 }
 
-/** Blindagem geral de sessão / legado */
-function ensureAuthIsolation() {
-  const p = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
-  const cpf = onlyDigits(p?.cpf || '');
-  const last = localStorage.getItem('TISAUDE_LAST_CPF') || '';
-
-  localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // legado
-
-  if (last && cpf && last !== cpf) {
-    localStorage.removeItem('TISAUDE_PATIENT_BEARER'); // limpa bearer global
-  }
-  if (cpf) localStorage.setItem('TISAUDE_LAST_CPF', cpf);
-
-  try {
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('TISAUDE_PATIENT_BEARER_') && !k.endsWith(cpf))
-      .forEach(k => localStorage.removeItem(k));
-  } catch {}
+/** /agendamento só abre via botão da agenda */
+function guardAgendamentoEntry(router: ReturnType<typeof useRouter>) {
+  const bypass = sessionStorage.getItem('BYPASS_AGENDAMENTO_REDIRECT') === '1';
+  if (!bypass) { router.replace('/minha-agenda'); return false; }
+  sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
+  return true;
 }
 
-/** Utils de normalização */
+/** Normalizações utilitárias */
 function toArraySafe(input: any): any[] {
   if (Array.isArray(input)) return input;
   if (!input || typeof input !== 'object') return [];
@@ -87,9 +49,7 @@ function toArraySafe(input: any): any[] {
 }
 function pickNestedObjectArray(arr: any[]): any[] {
   if (!Array.isArray(arr)) return [];
-  const nested = arr.find(
-    (el) => Array.isArray(el) && el.length > 0 && typeof el[0] === 'object' && !Array.isArray(el[0])
-  );
+  const nested = arr.find((el) => Array.isArray(el) && el.length > 0 && typeof el[0] === 'object' && !Array.isArray(el[0]));
   return Array.isArray(nested) ? nested : arr;
 }
 function normalizeDates(raw: any): string[] {
@@ -100,54 +60,26 @@ function normalizeDates(raw: any): string[] {
 function normalizeHours(raw: any): string[] {
   const base = toArraySafe(raw?.items ?? raw);
   const arr = pickNestedObjectArray(base);
-  return arr
-    .map((h: any) => (typeof h === 'string' ? h : h?.horario ?? h?.hora ?? h?.Hora ?? ''))
-    .filter(Boolean);
+  return arr.map((h: any) => (typeof h === 'string' ? h : h?.horario ?? h?.hora ?? h?.Hora ?? '')).filter(Boolean);
 }
-function capitalizeFirst(s: string) {
-  if (!s) return s;
-  const low = String(s).toLowerCase();
-  return low.charAt(0).toUpperCase() + low.slice(1);
-}
-function normalizeBooking(fromApi: any, fallbackProcId?: string) {
+function capitalizeFirst(s: string) { if (!s) return s; const low = String(s).toLowerCase(); return low.charAt(0).toUpperCase() + low.slice(1); }
+function normalizeBooking(fromApi: any) {
   const d = fromApi?.data || fromApi;
   const ag = d?.agendamento || d?.appointment || d;
-
-  const appointmentId =
-    ag?.id || ag?.agendamento_id || ag?.codigo || ag?.cod_agendamento || ag?.ID || ag?.uuid || ag?.sid || ag?.schedule_id || '';
-
-  const procedimentoId =
-    ag?.procedimento_id || ag?.procedimentoId || fallbackProcId || '';
-
-  const rawDate =
-    ag?.data || ag?.data_consulta || ag?.date || ag?.dia || ag?.when || ag?.inicio || ag?.startDate;
+  const rawDate = ag?.data || ag?.data_consulta || ag?.date || ag?.dia || ag?.when || ag?.inicio || ag?.startDate;
   const rawTime = ag?.hora || ag?.horario || ag?.time || ag?.startTime || ag?.inicio_hora;
+  const rawTipo = ag?.tipo || ag?.type || ag?.descricao || ag?.descricao_procedimento || 'Consulta';
+  const rawStatus = ag?.status || ag?.status_consulta || ag?.situacao || ag?.situation || ag?.payment_status;
 
-  const rawTipo =
-    ag?.tipo || ag?.type || ag?.descricao || ag?.descricao_procedimento || 'Consulta';
-  const rawStatus =
-    ag?.status || ag?.status_consulta || ag?.situacao || ag?.situation || ag?.payment_status;
-
-  const dateISO = (() => {
-    if (!rawDate) return '';
-    const s = String(rawDate);
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
-      const [dd, mm, yy] = s.split('/');
-      return `${yy}-${mm}-${dd}`;
-    }
-    const dt = new Date(s);
-    return isNaN(+dt) ? '' : dt.toISOString().slice(0, 10);
+  const dateISO = (() => { if (!rawDate) return ''; const s = String(rawDate);
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { const [dd,mm,yy] = s.split('/'); return `${yy}-${mm}-${dd}`; }
+    const dt = new Date(s); return isNaN(+dt) ? '' : dt.toISOString().slice(0,10);
   })();
-
-  const timeHHmm = (() => {
-    const s = rawTime ? String(rawTime) : '';
-    if (!s) return '';
-    if (/^\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0, 5);
-    const m = s.match(/(\d{1,2}:\d{2})/);
-    return m ? (m[1].length === 4 ? '0' + m[1] : m[1]) : '';
+  const timeHHmm = (() => { const s = rawTime ? String(rawTime) : ''; if (!s) return '';
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0,5);
+    const m = s.match(/(\d{1,2}:\d{2})/); return m ? (m[1].length === 4 ? '0'+m[1] : m[1]) : '';
   })();
-
   const statusNorm = (() => {
     const s = (rawStatus || '').toString().toLowerCase();
     if (!s) return '';
@@ -158,8 +90,6 @@ function normalizeBooking(fromApi: any, fallbackProcId?: string) {
   })();
 
   return {
-    appointmentId: String(appointmentId || ''),
-    procedimentoId: procedimentoId ? String(procedimentoId) : '',
     data: dateISO,
     hora: timeHHmm,
     tipo: capitalizeFirst(rawTipo || 'Consulta'),
@@ -168,47 +98,39 @@ function normalizeBooking(fromApi: any, fallbackProcId?: string) {
   };
 }
 
-/** Histórico namespaced por CPF */
+/** Salva histórico (principal + backup), nunca apaga legado */
+function saveHistory(cpf: string, items: any[]) {
+  const clipped = (items || []).slice(0, 500);
+  localStorage.setItem(keyAgenda(cpf), JSON.stringify(clipped));
+  localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
+}
+
 function saveBookingToHistoryPerCPF(apiResp: any, procedimentoId: string, chosenDate: string, chosenTime: string) {
   try {
     const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
-    const cpfDigits = onlyDigits(paciente?.cpf || '');
-    if (!cpfDigits) return;
-
-    const KEY = `TISAUDE_MEUS_AGENDAMENTOS_${cpfDigits}`;
+    const cpf = onlyDigits(paciente?.cpf || '');
+    if (!cpf) return;
+    const KEY = keyAgenda(cpf);
     const hist = JSON.parse(localStorage.getItem(KEY) || '[]');
-    const normalized = normalizeBooking(apiResp, procedimentoId);
+    const normalized = normalizeBooking(apiResp);
     const ensured = {
       ...normalized,
-      procedimentoId: normalized.procedimentoId || procedimentoId,
+      procedimentoId,
       data: normalized.data || chosenDate,
       hora: normalized.hora || (chosenTime.length === 5 ? chosenTime : (chosenTime || '').slice(0,5)),
-      tipo: normalized.tipo || 'Consulta',
-      ownerCpf: cpfDigits,
+      ownerCpf: cpf,
+      criadoEm: new Date().toISOString(),
     };
-    const newHist = [{ criadoEm: new Date().toISOString(), ...ensured }, ...(Array.isArray(hist) ? hist : [])].slice(0, 50);
-    localStorage.setItem(KEY, JSON.stringify(newHist));
-
-    localStorage.removeItem('TISAUDE_MEUS_AGENDAMENTOS'); // mata legado
+    const newHist = [ensured, ...(Array.isArray(hist) ? hist : [])];
+    saveHistory(cpf, newHist);
   } catch {}
 }
 
 async function criarAgendamento(payload: CriarAgendamentoPayload): Promise<ApiOk> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...authHeaders(),
-  };
-  const res = await fetch('/api/tisaude/consulta', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-  });
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...authHeaders() };
+  const res = await fetch('/api/tisaude/consulta', { method: 'POST', headers, body: JSON.stringify(payload) });
   const j: ApiOk | ApiErr = await safeJson(res);
-
-  if (!res.ok || !('ok' in j) || !j.ok) {
-    const msg = (j as ApiErr)?.error || 'Falha ao criar agendamento';
-    throw new Error(msg);
-  }
+  if (!res.ok || !('ok' in j) || !j.ok) throw new Error((j as ApiErr)?.error || 'Falha ao criar agendamento');
   return j as ApiOk;
 }
 
@@ -217,28 +139,18 @@ export default function Agendamento() {
 
   const [profissionais, setProfissionais] = useState<Prof[]>([]);
   const [profissional, setProfissional] = useState<Prof | null>(null);
-
   const [datas, setDatas] = useState<string[]>([]);
   const [dataSel, setDataSel] = useState<string>('');
-
   const [horas, setHoras] = useState<string[]>([]);
   const [horaSel, setHoraSel] = useState<string>('');
-
   const [loadingProfs, setLoadingProfs] = useState(false);
   const [loadingDatas, setLoadingDatas] = useState(false);
   const [loadingHoras, setLoadingHoras] = useState(false);
   const [agendando, setAgendando] = useState(false);
 
   useEffect(() => {
-    ensureAuthIsolation();
-
-    // /agendamento só abre via botão da agenda
-    const bypass = sessionStorage.getItem('BYPASS_AGENDAMENTO_REDIRECT') === '1';
-    if (!bypass) {
-      router.replace('/minha-agenda');
-      return;
-    }
-    sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
+    // 🔒 /agendamento só via botão da agenda
+    if (!guardAgendamentoEntry(router)) return;
 
     (async () => {
       try {
@@ -274,7 +186,6 @@ export default function Agendamento() {
     setProfissional(p);
     setDatas([]); setDataSel('');
     setHoras([]); setHoraSel('');
-
     try {
       setLoadingDatas(true);
       const procedimentoId = String(p.id || PROC_ID_DEFAULT);
@@ -283,9 +194,7 @@ export default function Agendamento() {
       const res = await fetch(url, { cache: 'no-store', headers });
       const json = await safeJson(res);
       if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao listar datas');
-
-      const list = normalizeDates(json);
-      setDatas(list);
+      setDatas(normalizeDates(json));
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao carregar datas');
     } finally {
@@ -297,7 +206,6 @@ export default function Agendamento() {
     setDataSel(iso);
     setHoras([]); setHoraSel('');
     if (!profissional) return;
-
     try {
       setLoadingHoras(true);
       const procedimentoId = String(profissional.id || PROC_ID_DEFAULT);
@@ -306,9 +214,7 @@ export default function Agendamento() {
       const res = await fetch(url, { cache: 'no-store', headers });
       const json = await safeJson(res);
       if (!res.ok || !json?.ok) throw new Error(json?.error || 'Falha ao listar horários');
-
-      const list = normalizeHours(json);
-      setHoras(list);
+      setHoras(normalizeHours(json));
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao carregar horários');
     } finally {
@@ -317,10 +223,7 @@ export default function Agendamento() {
   }, [profissional]);
 
   const confirmarAgendamento = useCallback(async () => {
-    if (!profissional || !dataSel || !horaSel) {
-      toast('Selecione profissional, data e horário.');
-      return;
-    }
+    if (!profissional || !dataSel || !horaSel) { toast('Selecione profissional, data e horário.'); return; }
     try {
       setAgendando(true);
       const procedimentoId = String(profissional.id || PROC_ID_DEFAULT);
@@ -330,27 +233,27 @@ export default function Agendamento() {
 
       const apiMsg = (apiResp as any)?.data?.mensagem || (apiResp as any)?.data?.message;
       const apiErr = (apiResp as any)?.data?.error;
-
       if (apiErr) {
         toast(apiMsg || 'Agendamento já existente para esse horário.');
       } else {
         toast.success('Agendamento criado com sucesso!');
 
-        // salva no histórico do CPF atual
+        // grava histórico por CPF (principal + backup)
+        const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
+        const cpf = onlyDigits(paciente?.cpf || '');
         saveBookingToHistoryPerCPF(apiResp, procedimentoId, dataSel, horaSel);
 
-        // limpa seleção
+        // limpa seleção e vai para agenda
         setHoraSel(''); setDataSel(''); setProfissional(null);
 
-        // link extra (pagamento/confirm)
         const link = (apiResp as any)?.data?.agendamento?.link_agendamento;
         if (link) window.open(link, '_blank');
 
+        // redireciona p/ minha agenda
         router.replace('/minha-agenda');
         return;
       }
 
-      // recarrega horários se conflitou
       await selecionarData(dataSel);
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao agendar consulta');
@@ -368,40 +271,22 @@ export default function Agendamento() {
         <VoltarHomeButton />
         <h1>Agendar Sessão</h1>
 
-        {/* PROFISSIONAIS */}
         <div className="profissional-container">
           <h2>Escolha sua profissional</h2>
-
           {loadingProfs ? (
             <p>Carregando profissionais...</p>
           ) : profissionais.length === 0 ? (
-            <p style={{ color: '#666' }}>
-              Nenhum profissional retornado. Faça login e verifique o hash no .env.
-            </p>
+            <p style={{ color: '#666' }}>Nenhum profissional retornado. Faça login e verifique o hash no .env.</p>
           ) : (
             <div style={{ display: 'grid', gap: 12 }}>
               {profissionais.map((p) => (
-                <div
-                  key={String(p.id)}
-                  className={`card-profissional novo ${profissional?.id === p.id ? 'ativo' : ''}`}
-                >
-                  <img
-                    src={p.foto || '/avatar_thays.png'}
-                    alt={p.nome || 'Profissional'}
-                    className="avatar pequeno"
-                    width={64}
-                    height={64}
-                    loading="lazy"
-                  />
+                <div key={String(p.id)} className={`card-profissional novo ${profissional?.id === p.id ? 'ativo' : ''}`}>
+                  <img src={p.foto || '/avatar_thays.png'} alt={p.nome || 'Profissional'} className="avatar pequeno" width={64} height={64} loading="lazy" />
                   <div className="prof-info">
                     <h3>{p.nome || p.nome_profissional}</h3>
                     <p>Atendimento humanizado e acolhedor.</p>
                   </div>
-                  <button
-                    className="botao-selecionar primario"
-                    onClick={() => selecionarProf(p)}
-                    aria-pressed={profissional?.id === p.id}
-                  >
+                  <button className="botao-selecionar primario" onClick={() => selecionarProf(p)} aria-pressed={profissional?.id === p.id}>
                     {profissional?.id === p.id ? 'Selecionado' : 'Selecionar'}
                   </button>
                 </div>
@@ -410,13 +295,10 @@ export default function Agendamento() {
           )}
         </div>
 
-        {/* DATAS */}
         {profissional && (
           <div className="horarios-section" style={{ marginTop: 20 }}>
             <h3>Datas disponíveis</h3>
-            {loadingDatas ? (
-              <p>Carregando datas...</p>
-            ) : datas.length === 0 ? (
+            {loadingDatas ? <p>Carregando datas...</p> : datas.length === 0 ? (
               <p style={{ color: '#666' }}>Nenhuma data disponível para este procedimento.</p>
             ) : (
               <div className="horarios">
@@ -430,27 +312,21 @@ export default function Agendamento() {
           </div>
         )}
 
-        {/* HORAS */}
         {dataSel && (
           <div className="pagamento-section">
             <h3>Horários disponíveis</h3>
-            {loadingHoras ? (
-              <p>Carregando horários...</p>
-            ) : horasFmt.length === 0 ? (
+            {loadingHoras ? <p>Carregando horários...</p> : horasFmt.length === 0 ? (
               <p style={{ color: '#666' }}>Nenhum horário disponível para esta data.</p>
             ) : (
               <div className="horarios">
                 {horasFmt.map((h) => (
-                  <button key={h} className={horaSel === h ? 'ativo' : ''} onClick={() => setHoraSel(h)}>
-                    {h}
-                  </button>
+                  <button key={h} className={horaSel === h ? 'ativo' : ''} onClick={() => setHoraSel(h)}>{h}</button>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* CONFIRMAR */}
         {horaSel && (
           <button className="confirmar" onClick={confirmarAgendamento} disabled={agendando} style={{ marginTop: 24 }}>
             {agendando ? 'Agendando...' : 'Confirmar Agendamento'}
