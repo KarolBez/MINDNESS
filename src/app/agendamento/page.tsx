@@ -1,3 +1,4 @@
+// src/app/agendamento/page.tsx
 'use client';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,9 +15,10 @@ const PROC_ID_DEFAULT = process.env.NEXT_PUBLIC_TISAUDE_PROCEDIMENTO_ID || '';
 
 function onlyDigits(s: string) { return (s || '').replace(/\D+/g, ''); }
 async function safeJson(res: Response): Promise<any> { try { return await res.json(); } catch { return {}; } }
-const bearerKey = (cpf: string) => `TISAUDE_PATIENT_BEARER_${cpf}`;
-const keyAgenda    = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
-const keyAgendaBak = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
+
+const bearerKey   = (cpf: string) => `TISAUDE_PATIENT_BEARER_${cpf}`;
+const keyAgenda   = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
+const keyAgendaBk = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
 
 function authHeaders(): Record<string, string> {
   const paciente = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null') : null;
@@ -38,7 +40,6 @@ function guardAgendamentoEntry(router: ReturnType<typeof useRouter>) {
   return true;
 }
 
-/** Normalizações utilitárias */
 function toArraySafe(input: any): any[] {
   if (Array.isArray(input)) return input;
   if (!input || typeof input !== 'object') return [];
@@ -98,11 +99,11 @@ function normalizeBooking(fromApi: any) {
   };
 }
 
-/** Salva histórico (principal + backup), nunca apaga legado */
+/** Salva histórico (principal + backup) */
 function saveHistory(cpf: string, items: any[]) {
-  const clipped = (items || []).slice(0, 500);
+  const clipped = (items || []).slice(0, 1000);
   localStorage.setItem(keyAgenda(cpf), JSON.stringify(clipped));
-  localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
+  localStorage.setItem(keyAgendaBk(cpf), JSON.stringify(clipped));
 }
 
 function saveBookingToHistoryPerCPF(apiResp: any, procedimentoId: string, chosenDate: string, chosenTime: string) {
@@ -149,7 +150,6 @@ export default function Agendamento() {
   const [agendando, setAgendando] = useState(false);
 
   useEffect(() => {
-    // 🔒 /agendamento só via botão da agenda
     if (!guardAgendamentoEntry(router)) return;
 
     (async () => {
@@ -238,18 +238,15 @@ export default function Agendamento() {
       } else {
         toast.success('Agendamento criado com sucesso!');
 
-        // grava histórico por CPF (principal + backup)
         const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
         const cpf = onlyDigits(paciente?.cpf || '');
         saveBookingToHistoryPerCPF(apiResp, procedimentoId, dataSel, horaSel);
 
-        // limpa seleção e vai para agenda
         setHoraSel(''); setDataSel(''); setProfissional(null);
 
         const link = (apiResp as any)?.data?.agendamento?.link_agendamento;
         if (link) window.open(link, '_blank');
 
-        // redireciona p/ minha agenda
         router.replace('/minha-agenda');
         return;
       }

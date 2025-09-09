@@ -1,3 +1,4 @@
+// src/app/minha-agenda/page.tsx
 'use client';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import './minha-agenda.css';
@@ -34,10 +35,10 @@ function hhmm(timeStr?: string): string {
 function capitalizeFirst(s?: string) { if (!s) return ''; const low = (s || '').toLowerCase(); return low.charAt(0).toUpperCase() + low.slice(1); }
 function safeParse<T=any>(raw: string | null): T | null { try { return raw ? JSON.parse(raw) as T : null; } catch { return null; } }
 
-const keyAgenda    = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
-const keyAgendaBak = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
+const keyAgenda     = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
+const keyAgendaBak  = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
 
-/** Recupera do backup caso a chave principal esteja vazia/corrompida */
+/** Recupera do backup se a principal estiver vazia/corrompida; nunca apaga nada aqui */
 function ensureAgendaWithBackup(cpf: string): any[] {
   const k = keyAgenda(cpf);
   const kb = keyAgendaBak(cpf);
@@ -52,7 +53,7 @@ function ensureAgendaWithBackup(cpf: string): any[] {
   return Array.isArray(main) ? main : [];
 }
 
-/** Migra legado para a chave por CPF e faz backup */
+/** Migra legado -> CPF e grava backup; não apaga legado */
 function migrateLegacyToCpf(cpf: string) {
   try {
     const legacyRaw = localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS');
@@ -62,8 +63,9 @@ function migrateLegacyToCpf(cpf: string) {
     const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
     const merged = [...legacyArr, ...curr];
     if (merged.length) {
-      localStorage.setItem(dst, JSON.stringify(merged.slice(0, 500)));
-      localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(merged.slice(0, 500)));
+      const clipped = merged.slice(0, 1000);
+      localStorage.setItem(dst, JSON.stringify(clipped));
+      localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
     }
   } catch {}
 }
@@ -98,13 +100,10 @@ export default function MinhaAgendaPage() {
       }
       setPaciente(p);
 
-      // 1) migra legado → cpf (sem apagar) e grava backup
       migrateLegacyToCpf(currentCpf);
 
-      // 2) carrega garantindo recuperação pelo backup
       const arr = ensureAgendaWithBackup(currentCpf);
 
-      // 3) normalização só para exibição (não regrava)
       const normalized = (Array.isArray(arr) ? arr : []).map((it) => {
         const topoData   = it?.data as string | undefined;
         const topoHora   = it?.hora as string | undefined;
@@ -146,25 +145,27 @@ export default function MinhaAgendaPage() {
     if (!storageKey) return;
     if (!confirm('Remover este agendamento do histórico?')) return;
 
-    const cpf = onlyDigits(paciente?.cpf || '');
+    const p = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
+    const cpf = onlyDigits(p?.cpf || '');
+
     const all = safeParse<any[]>(localStorage.getItem(storageKey)) || [];
     if (!Array.isArray(all)) return;
     all.splice(idx, 1);
-    const clipped = all.slice(0, 500);
+    const clipped = all.slice(0, 1000);
     localStorage.setItem(storageKey, JSON.stringify(clipped));
-    // mantém o backup sincronizado
-    if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
+    if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped)); // mantém backup sincronizado
     setItens((prev) => prev.filter((_, i) => i !== idx));
-  }, [storageKey, paciente]);
+  }, [storageKey]);
 
   const apagarTudo = useCallback(() => {
     if (!storageKey) return;
     if (!confirm('Apagar TODO o histórico deste usuário?')) return;
-    const cpf = onlyDigits(paciente?.cpf || '');
+    const p = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
+    const cpf = onlyDigits(p?.cpf || '');
     localStorage.removeItem(storageKey);
     if (cpf) localStorage.removeItem(keyAgendaBak(cpf));
     setItens([]);
-  }, [storageKey, paciente]);
+  }, [storageKey]);
 
   const cpfFmt = useMemo(() => formatCPF(paciente?.cpf), [paciente]);
   const celFmt = useMemo(() => formatPhone(paciente?.celular), [paciente]);

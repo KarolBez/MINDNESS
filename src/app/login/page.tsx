@@ -1,3 +1,4 @@
+// src/app/login/page.tsx
 'use client';
 import './login.css';
 import Link from 'next/link';
@@ -17,10 +18,12 @@ function maskCPF(v: string) {
   return out;
 }
 function safeParse<T=any>(raw: string | null): T | null { try { return raw ? JSON.parse(raw) as T : null; } catch { return null; } }
-const keyAgenda = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
-const keyAgendaBak = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
-const keyBearer = (cpf: string) => `TISAUDE_PATIENT_BEARER_${cpf}`;
 
+const keyAgenda     = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
+const keyAgendaBak  = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
+const keyBearer     = (cpf: string) => `TISAUDE_PATIENT_BEARER_${cpf}`;
+
+/** Migra histórico legado global -> chave por CPF e cria backup, sem apagar o legado */
 function migrateLegacyToCpf(cpf: string) {
   try {
     const legacyRaw = localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS');
@@ -30,29 +33,28 @@ function migrateLegacyToCpf(cpf: string) {
     const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
     const merged = [...legacyArr, ...curr];
     if (merged.length) {
-      localStorage.setItem(dst, JSON.stringify(merged.slice(0, 500)));
-      localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(merged.slice(0, 500)));
+      const clipped = merged.slice(0, 1000);
+      localStorage.setItem(dst, JSON.stringify(clipped));
+      localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
     }
-    // NÃO apagamos o legado aqui.
   } catch {}
 }
 
+/** Limpa apenas dados namespaced de outros CPFs (agenda/bearer), preservando legado e o do CPF atual */
 function purgeOtherCpfs(currentCpf: string) {
   try {
     const allow = new Set([
       'TISAUDE_PACIENTE',
       'TISAUDE_PATIENT_BEARER',
       'TISAUDE_CURRENT_CPF',
+      'TISAUDE_MEUS_AGENDAMENTOS', // legado preservado
       keyAgenda(currentCpf),
       keyAgendaBak(currentCpf),
       keyBearer(currentCpf),
-      'TISAUDE_MEUS_AGENDAMENTOS' // legado mantido
     ]);
     for (const k of Object.keys(localStorage)) {
-      // Não mexa em legado; só limpe dados namespaced de outros CPFs
-      if ((k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') || k.startsWith('TISAUDE_PATIENT_BEARER_')) && !allow.has(k)) {
-        localStorage.removeItem(k);
-      }
+      const isNamespaced = k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') || k.startsWith('TISAUDE_PATIENT_BEARER_');
+      if (isNamespaced && !allow.has(k)) localStorage.removeItem(k);
     }
   } catch {}
 }
@@ -60,7 +62,7 @@ function purgeOtherCpfs(currentCpf: string) {
 function setBearerForCpf(cpf: string, token: string) {
   try {
     localStorage.setItem('TISAUDE_PATIENT_BEARER', token); // compat
-    localStorage.setItem(keyBearer(cpf), token);           // por CPF
+    localStorage.setItem(keyBearer(cpf), token);           // namespaced
   } catch {}
 }
 
@@ -81,6 +83,7 @@ export default function LoginPage() {
 
     try {
       setLoadingPaciente(true);
+
       const res = await fetch('/api/tisaude/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +92,7 @@ export default function LoginPage() {
       const j = await res.json().catch(() => ({} as any));
       if (!res.ok || !j?.ok) throw new Error(j?.error || 'Falha no login');
 
-      // zera mínimos (NÃO apaga histórico/legado)
+      // reset mínimo (sem tocar no histórico)
       try {
         localStorage.removeItem('TISAUDE_PACIENTE');
         sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
@@ -99,22 +102,18 @@ export default function LoginPage() {
       localStorage.setItem('TISAUDE_CURRENT_CPF', cpfDigits);
       setBearerForCpf(cpfDigits, j.data.access_token);
 
-      // migra histórico legado -> cpf (sem perdas) e cria backup
       migrateLegacyToCpf(cpfDigits);
-
-      // limpa chaves de outros CPFs, preservando nosso histórico/backup e legado
       purgeOtherCpfs(cpfDigits);
 
       toast.success('Login realizado!');
-      liveRef.current && (liveRef.current.textContent = 'Login realizado com sucesso.');
-
+      if (liveRef.current) liveRef.current.textContent = 'Login realizado com sucesso.';
       // Sempre: Minha Agenda
       router.replace('/minha-agenda');
     } catch (err: any) {
       const msg = err?.message || 'Erro ao logar paciente';
       setInlineError(msg);
       toast.error(msg);
-      liveRef.current && (liveRef.current.textContent = msg);
+      if (liveRef.current) liveRef.current.textContent = msg;
     } finally {
       setLoadingPaciente(false);
     }
@@ -159,7 +158,7 @@ export default function LoginPage() {
               {loadingPaciente ? 'Entrando...' : 'Entrar'}
             </button>
 
-            <p id="cpf-hint" className="hint">Após o login, você será levado para a sua agenda. De lá você marca a consulta.</p>
+            <p id="cpf-hint" className="hint">Após o login, você será levado para a sua agenda. O agendamento só abre pelo botão dentro da agenda.</p>
           </form>
           <div aria-live="polite" aria-atomic="true" className="sr-live" ref={liveRef} />
         </section>
