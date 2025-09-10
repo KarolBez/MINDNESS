@@ -31,7 +31,7 @@ function authHeaders(): Record<string, string> {
   return h;
 }
 
-/** Verifica consistência do login */
+
 function checkLoginConsistency(): boolean {
   try {
     const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
@@ -44,9 +44,8 @@ function checkLoginConsistency(): boolean {
   }
 }
 
-/** /agendamento só abre via botão da agenda */
+
 function guardAgendamentoEntry(router: ReturnType<typeof useRouter>) {
-  // Verifica consistência do login primeiro
   if (!checkLoginConsistency()) {
     localStorage.removeItem('TISAUDE_PACIENTE');
     localStorage.removeItem('TISAUDE_CURRENT_CPF');
@@ -122,7 +121,7 @@ function normalizeBooking(fromApi: any) {
   };
 }
 
-/** Salva histórico (principal + backup) */
+
 function saveHistory(cpf: string, items: any[]) {
   const clipped = (items || []).slice(0, 1000);
   localStorage.setItem(keyAgenda(cpf), JSON.stringify(clipped));
@@ -139,7 +138,6 @@ function saveBookingToHistoryPerCPF(apiResp: any, procedimentoId: string, chosen
     const hist = JSON.parse(localStorage.getItem(KEY) || '[]');
     const normalized = normalizeBooking(apiResp);
     
-    // Gera ID único para evitar duplicação
     const uniqueId = `${procedimentoId}-${chosenDate}-${chosenTime}-${Date.now()}`;
     
     const ensured = {
@@ -152,7 +150,7 @@ function saveBookingToHistoryPerCPF(apiResp: any, procedimentoId: string, chosen
       criadoEm: new Date().toISOString(),
     };
     
-    // Verifica se já existe para evitar duplicação
+    
     const existingIds = new Set(hist.map((item: any) => item._id || item.id));
     if (!existingIds.has(uniqueId)) {
       const newHist = [ensured, ...hist];
@@ -281,7 +279,6 @@ export default function Agendamento() {
         const link = (apiResp as any)?.data?.agendamento?.link_agendamento;
         if (link) window.open(link, '_blank');
 
-        // Redireciona sempre para Minha Agenda
         router.replace('/minha-agenda');
         return;
       }

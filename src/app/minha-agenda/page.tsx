@@ -37,7 +37,7 @@ function safeParse<T=any>(raw: string | null): T | null { try { return raw ? JSO
 const keyAgenda     = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
 const keyAgendaBak  = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
 
-/** Verifica consistência do login atual */
+
 function checkLoginConsistency(): boolean {
   try {
     const paciente = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
@@ -50,7 +50,7 @@ function checkLoginConsistency(): boolean {
   }
 }
 
-/** Recupera do backup se a principal estiver vazia/corrompida; nunca apaga nada aqui */
+
 function ensureAgendaWithBackup(cpf: string): any[] {
   const k = keyAgenda(cpf);
   const kb = keyAgendaBak(cpf);
@@ -65,7 +65,7 @@ function ensureAgendaWithBackup(cpf: string): any[] {
   return Array.isArray(main) ? main : [];
 }
 
-/** Migra legado -> CPF e grava backup; não apaga legado */
+
 function migrateLegacyToCpf(cpf: string) {
   try {
     const legacyRaw = localStorage.getItem('TISAUDE_MEUS_AGENDAMENTOS');
@@ -73,8 +73,7 @@ function migrateLegacyToCpf(cpf: string) {
     const legacyArr = safeParse<any[]>(legacyRaw) || [];
     const dst = keyAgenda(cpf);
     const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
-    
-    // Evitar duplicação durante migração
+   
     const existingIds = new Set(curr.map(item => item._id || item.id));
     const newItems = legacyArr.filter(item => !existingIds.has(item._id || item.id));
     
@@ -106,21 +105,18 @@ export default function MinhaAgendaPage() {
   }, []);
 
   const sair = useCallback(() => {
-    // NÃO limpa o histórico ao sair - apenas remove dados de sessão
     try {
-      // Remove apenas os dados de autenticação, mantendo o histórico
       localStorage.removeItem('TISAUDE_PACIENTE');
       localStorage.removeItem('TISAUDE_CURRENT_CPF');
       sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
       
-      // Remove apenas o token de autenticação, mantendo agenda
       const pacienteAntigo = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
       const cpfAntigo = onlyDigits(pacienteAntigo?.cpf || '');
       
       if (cpfAntigo) {
         const bearerKey = `TISAUDE_PATIENT_BEARER_${cpfAntigo}`;
         localStorage.removeItem(bearerKey);
-        localStorage.removeItem('TISAUDE_PATIENT_BEARER'); // compatibilidade
+        localStorage.removeItem('TISAUDE_PATIENT_BEARER'); 
       }
     } catch {}
     
@@ -128,9 +124,7 @@ export default function MinhaAgendaPage() {
   }, []);
 
   useEffect(() => {
-    // Verifica consistência do login - se não estiver logado, redireciona
     if (!checkLoginConsistency()) {
-      // Não limpa o histórico aqui - apenas redireciona para login
       window.location.href = '/login';
       return;
     }
@@ -146,7 +140,6 @@ export default function MinhaAgendaPage() {
       }
       
       if (currentFlag && currentFlag !== currentCpf) {
-        // Inconsistência detectada - redireciona para login sem limpar histórico
         localStorage.removeItem('TISAUDE_PACIENTE');
         localStorage.removeItem('TISAUDE_CURRENT_CPF');
         window.location.href = '/login';
@@ -206,13 +199,13 @@ export default function MinhaAgendaPage() {
     const all = safeParse<any[]>(localStorage.getItem(storageKey)) || [];
     if (!Array.isArray(all)) return;
     
-    // Cria cópia antes de modificar
+   
     const updated = [...all];
     updated.splice(idx, 1);
     
     const clipped = updated.slice(0, 1000);
     localStorage.setItem(storageKey, JSON.stringify(clipped));
-    if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped)); // mantém backup sincronizado
+    if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
     setItens((prev) => prev.filter((_, i) => i !== idx));
   }, [storageKey]);
 
@@ -222,7 +215,7 @@ export default function MinhaAgendaPage() {
     const p = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
     const cpf = onlyDigits(p?.cpf || '');
     
-    // Mantém o array vazio em vez de remover completamente
+
     localStorage.setItem(storageKey, JSON.stringify([]));
     if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify([]));
     
