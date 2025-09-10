@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 'use client';
 import './login.css';
 import Link from 'next/link';
@@ -31,30 +30,16 @@ function migrateLegacyToCpf(cpf: string) {
     const legacyArr = safeParse<any[]>(legacyRaw) || [];
     const dst = keyAgenda(cpf);
     const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
-    const merged = [...legacyArr, ...curr];
+    
+    // Evitar duplicação durante migração
+    const existingIds = new Set(curr.map(item => item._id || item.id));
+    const newItems = legacyArr.filter(item => !existingIds.has(item._id || item.id));
+    
+    const merged = [...newItems, ...curr];
     if (merged.length) {
       const clipped = merged.slice(0, 1000);
       localStorage.setItem(dst, JSON.stringify(clipped));
       localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped));
-    }
-  } catch {}
-}
-
-/** Limpa apenas dados namespaced de outros CPFs (agenda/bearer), preservando legado e o do CPF atual */
-function purgeOtherCpfs(currentCpf: string) {
-  try {
-    const allow = new Set([
-      'TISAUDE_PACIENTE',
-      'TISAUDE_PATIENT_BEARER',
-      'TISAUDE_CURRENT_CPF',
-      'TISAUDE_MEUS_AGENDAMENTOS', // legado preservado
-      keyAgenda(currentCpf),
-      keyAgendaBak(currentCpf),
-      keyBearer(currentCpf),
-    ]);
-    for (const k of Object.keys(localStorage)) {
-      const isNamespaced = k.startsWith('TISAUDE_MEUS_AGENDAMENTOS_') || k.startsWith('TISAUDE_PATIENT_BEARER_');
-      if (isNamespaced && !allow.has(k)) localStorage.removeItem(k);
     }
   } catch {}
 }
@@ -89,25 +74,37 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf: cpfDigits }),
       });
+      
       const j = await res.json().catch(() => ({} as any));
       if (!res.ok || !j?.ok) throw new Error(j?.error || 'Falha no login');
 
-      // reset mínimo (sem tocar no histórico)
+      // Limpa apenas dados de autenticação, mantendo histórico
       try {
+        // Remove apenas dados de sessão anteriores
         localStorage.removeItem('TISAUDE_PACIENTE');
+        localStorage.removeItem('TISAUDE_CURRENT_CPF');
         sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
+        
+        // Remove tokens de autenticação de usuários anteriores
+        const allKeys = Object.keys(localStorage);
+        const bearerKeys = allKeys.filter(key => key.startsWith('TISAUDE_PATIENT_BEARER_'));
+        bearerKeys.forEach(key => localStorage.removeItem(key));
+        localStorage.removeItem('TISAUDE_PATIENT_BEARER'); // compatibilidade
       } catch {}
 
-      localStorage.setItem('TISAUDE_PACIENTE', JSON.stringify(j.data.paciente || { cpf: cpfDigits }));
+      // Salva os novos dados
+      const pacienteData = j.data.paciente || { cpf: cpfDigits };
+      localStorage.setItem('TISAUDE_PACIENTE', JSON.stringify(pacienteData));
       localStorage.setItem('TISAUDE_CURRENT_CPF', cpfDigits);
       setBearerForCpf(cpfDigits, j.data.access_token);
 
+      // Migra dados legados (se houver)
       migrateLegacyToCpf(cpfDigits);
-      purgeOtherCpfs(cpfDigits);
 
       toast.success('Login realizado!');
       if (liveRef.current) liveRef.current.textContent = 'Login realizado com sucesso.';
-      // Sempre: Minha Agenda
+      
+      // Redireciona para Minha Agenda APÓS o login
       router.replace('/minha-agenda');
     } catch (err: any) {
       const msg = err?.message || 'Erro ao logar paciente';

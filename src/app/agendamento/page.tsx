@@ -1,4 +1,3 @@
-// src/app/agendamento/page.tsx
 'use client';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -32,10 +31,34 @@ function authHeaders(): Record<string, string> {
   return h;
 }
 
+/** Verifica consistência do login */
+function checkLoginConsistency(): boolean {
+  try {
+    const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
+    const currentCpf = onlyDigits(paciente?.cpf || '');
+    const storedCpf = localStorage.getItem('TISAUDE_CURRENT_CPF');
+    
+    return !!currentCpf && !!storedCpf && currentCpf === storedCpf;
+  } catch {
+    return false;
+  }
+}
+
 /** /agendamento só abre via botão da agenda */
 function guardAgendamentoEntry(router: ReturnType<typeof useRouter>) {
+  // Verifica consistência do login primeiro
+  if (!checkLoginConsistency()) {
+    localStorage.removeItem('TISAUDE_PACIENTE');
+    localStorage.removeItem('TISAUDE_CURRENT_CPF');
+    router.replace('/login');
+    return false;
+  }
+
   const bypass = sessionStorage.getItem('BYPASS_AGENDAMENTO_REDIRECT') === '1';
-  if (!bypass) { router.replace('/minha-agenda'); return false; }
+  if (!bypass) { 
+    router.replace('/minha-agenda'); 
+    return false; 
+  }
   sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
   return true;
 }
@@ -111,19 +134,30 @@ function saveBookingToHistoryPerCPF(apiResp: any, procedimentoId: string, chosen
     const paciente = JSON.parse(localStorage.getItem('TISAUDE_PACIENTE') || 'null');
     const cpf = onlyDigits(paciente?.cpf || '');
     if (!cpf) return;
+    
     const KEY = keyAgenda(cpf);
     const hist = JSON.parse(localStorage.getItem(KEY) || '[]');
     const normalized = normalizeBooking(apiResp);
+    
+    // Gera ID único para evitar duplicação
+    const uniqueId = `${procedimentoId}-${chosenDate}-${chosenTime}-${Date.now()}`;
+    
     const ensured = {
       ...normalized,
+      _id: uniqueId,
       procedimentoId,
       data: normalized.data || chosenDate,
       hora: normalized.hora || (chosenTime.length === 5 ? chosenTime : (chosenTime || '').slice(0,5)),
       ownerCpf: cpf,
       criadoEm: new Date().toISOString(),
     };
-    const newHist = [ensured, ...(Array.isArray(hist) ? hist : [])];
-    saveHistory(cpf, newHist);
+    
+    // Verifica se já existe para evitar duplicação
+    const existingIds = new Set(hist.map((item: any) => item._id || item.id));
+    if (!existingIds.has(uniqueId)) {
+      const newHist = [ensured, ...hist];
+      saveHistory(cpf, newHist);
+    }
   } catch {}
 }
 
@@ -247,6 +281,7 @@ export default function Agendamento() {
         const link = (apiResp as any)?.data?.agendamento?.link_agendamento;
         if (link) window.open(link, '_blank');
 
+        // Redireciona sempre para Minha Agenda
         router.replace('/minha-agenda');
         return;
       }

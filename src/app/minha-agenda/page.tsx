@@ -1,4 +1,3 @@
-// src/app/minha-agenda/page.tsx
 'use client';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import './minha-agenda.css';
@@ -38,6 +37,19 @@ function safeParse<T=any>(raw: string | null): T | null { try { return raw ? JSO
 const keyAgenda     = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}`;
 const keyAgendaBak  = (cpf: string) => `TISAUDE_MEUS_AGENDAMENTOS_${cpf}__bak`;
 
+/** Verifica consistência do login atual */
+function checkLoginConsistency(): boolean {
+  try {
+    const paciente = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
+    const currentCpf = onlyDigits(paciente?.cpf || '');
+    const storedCpf = localStorage.getItem('TISAUDE_CURRENT_CPF');
+    
+    return !!currentCpf && !!storedCpf && currentCpf === storedCpf;
+  } catch {
+    return false;
+  }
+}
+
 /** Recupera do backup se a principal estiver vazia/corrompida; nunca apaga nada aqui */
 function ensureAgendaWithBackup(cpf: string): any[] {
   const k = keyAgenda(cpf);
@@ -61,7 +73,12 @@ function migrateLegacyToCpf(cpf: string) {
     const legacyArr = safeParse<any[]>(legacyRaw) || [];
     const dst = keyAgenda(cpf);
     const curr = safeParse<any[]>(localStorage.getItem(dst)) || [];
-    const merged = [...legacyArr, ...curr];
+    
+    // Evitar duplicação durante migração
+    const existingIds = new Set(curr.map(item => item._id || item.id));
+    const newItems = legacyArr.filter(item => !existingIds.has(item._id || item.id));
+    
+    const merged = [...newItems, ...curr];
     if (merged.length) {
       const clipped = merged.slice(0, 1000);
       localStorage.setItem(dst, JSON.stringify(clipped));
@@ -82,22 +99,60 @@ export default function MinhaAgendaPage() {
   }, []);
 
   const goToAgendar = useCallback(() => {
-    try { sessionStorage.setItem('BYPASS_AGENDAMENTO_REDIRECT', '1'); } catch {}
+    try { 
+      sessionStorage.setItem('BYPASS_AGENDAMENTO_REDIRECT', '1'); 
+    } catch {}
     window.location.href = '/agendamento';
   }, []);
 
+  const sair = useCallback(() => {
+    // NÃO limpa o histórico ao sair - apenas remove dados de sessão
+    try {
+      // Remove apenas os dados de autenticação, mantendo o histórico
+      localStorage.removeItem('TISAUDE_PACIENTE');
+      localStorage.removeItem('TISAUDE_CURRENT_CPF');
+      sessionStorage.removeItem('BYPASS_AGENDAMENTO_REDIRECT');
+      
+      // Remove apenas o token de autenticação, mantendo agenda
+      const pacienteAntigo = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
+      const cpfAntigo = onlyDigits(pacienteAntigo?.cpf || '');
+      
+      if (cpfAntigo) {
+        const bearerKey = `TISAUDE_PATIENT_BEARER_${cpfAntigo}`;
+        localStorage.removeItem(bearerKey);
+        localStorage.removeItem('TISAUDE_PATIENT_BEARER'); // compatibilidade
+      }
+    } catch {}
+    
+    window.location.href = '/login';
+  }, []);
+
   useEffect(() => {
+    // Verifica consistência do login - se não estiver logado, redireciona
+    if (!checkLoginConsistency()) {
+      // Não limpa o histórico aqui - apenas redireciona para login
+      window.location.href = '/login';
+      return;
+    }
+
     try {
       const p = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
       const currentCpf = onlyDigits(p?.cpf || '');
       const currentFlag = localStorage.getItem('TISAUDE_CURRENT_CPF') || '';
 
-      if (!p || !currentCpf) { window.location.href = '/login'; return; }
+      if (!p || !currentCpf) { 
+        window.location.href = '/login'; 
+        return; 
+      }
+      
       if (currentFlag && currentFlag !== currentCpf) {
+        // Inconsistência detectada - redireciona para login sem limpar histórico
         localStorage.removeItem('TISAUDE_PACIENTE');
+        localStorage.removeItem('TISAUDE_CURRENT_CPF');
         window.location.href = '/login';
         return;
       }
+      
       setPaciente(p);
 
       migrateLegacyToCpf(currentCpf);
@@ -150,8 +205,12 @@ export default function MinhaAgendaPage() {
 
     const all = safeParse<any[]>(localStorage.getItem(storageKey)) || [];
     if (!Array.isArray(all)) return;
-    all.splice(idx, 1);
-    const clipped = all.slice(0, 1000);
+    
+    // Cria cópia antes de modificar
+    const updated = [...all];
+    updated.splice(idx, 1);
+    
+    const clipped = updated.slice(0, 1000);
     localStorage.setItem(storageKey, JSON.stringify(clipped));
     if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify(clipped)); // mantém backup sincronizado
     setItens((prev) => prev.filter((_, i) => i !== idx));
@@ -162,8 +221,11 @@ export default function MinhaAgendaPage() {
     if (!confirm('Apagar TODO o histórico deste usuário?')) return;
     const p = safeParse<Paciente>(localStorage.getItem('TISAUDE_PACIENTE'));
     const cpf = onlyDigits(p?.cpf || '');
-    localStorage.removeItem(storageKey);
-    if (cpf) localStorage.removeItem(keyAgendaBak(cpf));
+    
+    // Mantém o array vazio em vez de remover completamente
+    localStorage.setItem(storageKey, JSON.stringify([]));
+    if (cpf) localStorage.setItem(keyAgendaBak(cpf), JSON.stringify([]));
+    
     setItens([]);
   }, [storageKey]);
 
@@ -174,11 +236,12 @@ export default function MinhaAgendaPage() {
     <div className="ma-wrap">
       <header className="ma-hero">
         <div><h1 className="ma-tt">Minha agenda</h1></div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="ma-btn ma-btn-primary" onClick={goToAgendar}>+ Marcar novo agendamento</button>
           {itens.length > 0 && (
             <button className="ma-btn ma-btn-outline" onClick={apagarTudo} title="Apagar tudo">Apagar tudo</button>
           )}
+          <button className="ma-btn ma-btn-danger" onClick={sair} title="Sair">Sair</button>
         </div>
       </header>
 
@@ -197,7 +260,11 @@ export default function MinhaAgendaPage() {
       </section>
 
       <section className="ma-list">
-        {!loaded ? null : itens.length === 0 ? (
+        {!loaded ? (
+          <div className="ma-empty ma-card--glass">
+            <p>Carregando agendamentos...</p>
+          </div>
+        ) : itens.length === 0 ? (
           <div className="ma-empty ma-card--glass">
             <div className="ma-illus" />
             <p>Você ainda não possui agendamentos.</p>
