@@ -8,18 +8,20 @@ import './HomeContent.css';
 export default function HomeContent() {
   return (
     <div className="homepage">
-
       {/* HERO */}
       <section className="hero" id="topo">
         <div className="hero__inner">
           <span className="badge">Plataforma de saúde emocional para empresas</span>
+
           <h1 className="hero__title">
             Cuidar de pessoas é cuidar do futuro. <br />
             <span className="hero__title--brand">Mindness</span> conecta sua equipe a bem-estar real.
           </h1>
+
           <p className="hero__subtitle">
             Programas acessíveis, dados acionáveis e atendimento psicológico com UX simples e acolhedora.
           </p>
+
           <div className="hero__ctas">
             <Link className="btn btn--brand" href="/agendamento">Agendar Sessão</Link>
             <Link className="btn btn--ghost" href="/primeiro-acesso">Primeiro acesso</Link>
@@ -33,27 +35,43 @@ export default function HomeContent() {
 
       {/* SOBRE */}
       <section className="about" id="sobre">
-        <div className="about__grid">
+        <div className="about__grid container">
           <div className="about__text">
             <h2>Sobre a Mindness</h2>
-            <p>
-              A Mindness nasce para tornar a saúde mental parte estratégica da gestão. Combinamos ciência,
-              empatia e escuta ativa para criar soluções simples e eficazes – do diagnóstico à ação,
-              ajudando empresas a construírem ambientes mais humanos, produtivos e sustentáveis.
-            </p>
-            <p>
-              Ao cuidar da experiência emocional das pessoas, transformamos cultura, engajamento e resultados.
-              Cuidar de pessoas é cuidar do futuro – e nós facilitamos esse caminho.
-            </p>
-            <div className="about__bullets">
-              <div className="chip">Mapeamento emocional</div>
-              <div className="chip">Atendimento acessível</div>
-              <div className="chip">Indicadores e insights</div>
+            <p className="subtitle">Cuidar de pessoas é cuidar do futuro.</p>
+
+            <div className="prose">
+              <p>
+                A Mindness nasce para tornar a saúde mental parte estratégica da gestão. Combinamos ciência,
+                empatia e escuta ativa para criar soluções simples e eficazes – do diagnóstico à ação,
+                ajudando empresas a construírem ambientes mais humanos, produtivos e sustentáveis.
+              </p>
+              <p>
+                Ao cuidar da experiência emocional das pessoas, transformamos cultura, engajamento e resultados.
+                Cuidar de pessoas é cuidar do futuro – e nós facilitamos esse caminho.
+              </p>
+            </div>
+
+            <div className="about__bullets chips" role="list">
+              <span className="chip" role="listitem">Mapeamento emocional</span>
+              <span className="chip" role="listitem">Atendimento acessível</span>
+              <span className="chip" role="listitem">Indicadores e insights</span>
             </div>
           </div>
+
           <div className="about__media">
             <div className="about__card">
-              <Image src="/sobre.avif" alt="Cuidado emocional" width={550} height={400} className="rounded" />
+              <span className="tag">Programa Corporativo</span>
+              <div className="media">
+                {/* Usa fill + aspect-ratio do CSS para responsividade perfeita */}
+                <Image
+                  src="/sobre.avif"
+                  alt="Profissional segurando pasta — cuidado emocional no trabalho"
+                  fill
+                  sizes="(max-width: 980px) 92vw, 520px"
+                  priority={false}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -64,22 +82,22 @@ export default function HomeContent() {
         <h2>Benefícios para sua empresa</h2>
         <div className="benefits__grid">
           <article className="benefit">
-            <span className="benefit__emoji">💼</span>
+            <span className="benefit__emoji" aria-hidden>💼</span>
             <h3>Menos estresse</h3>
             <p>Redução de afastamentos e um cotidiano mais leve para a equipe.</p>
           </article>
           <article className="benefit">
-            <span className="benefit__emoji">🌤</span>
+            <span className="benefit__emoji" aria-hidden>🌤</span>
             <h3>Clima saudável</h3>
             <p>Ambiente colaborativo, transparente e psicologicamente seguro.</p>
           </article>
           <article className="benefit">
-            <span className="benefit__emoji">🎯</span>
+            <span className="benefit__emoji" aria-hidden>🎯</span>
             <h3>Talentos retidos</h3>
             <p>Pessoas engajadas permanecem. Bem-estar é vantagem competitiva.</p>
           </article>
           <article className="benefit">
-            <span className="benefit__emoji">🚀</span>
+            <span className="benefit__emoji" aria-hidden>🚀</span>
             <h3>Alta performance</h3>
             <p>Times motivados, produtivos e focados no que importa.</p>
           </article>
@@ -95,7 +113,7 @@ export default function HomeContent() {
 
         <div className="services__grid">
           <article className="service">
-            <Image src="/diagnostic.svg" alt="Diagnóstico" width={48} height={48} />
+            <Image src="/diagnostic.svg" alt="" width={48} height={48} aria-hidden />
             <h3>Diagnóstico</h3>
             <ul>
               <li>Mapeamento emocional</li>
@@ -105,17 +123,17 @@ export default function HomeContent() {
           </article>
 
           <article className="service">
-            <Image src="/teacher.svg" alt="Treinamentos" width={48} height={48} />
+            <Image src="/teacher.svg" alt="" width={48} height={48} aria-hidden />
             <h3>Treinamentos</h3>
             <ul>
               <li>Workshops em saúde mental</li>
-              <li>Liderança empática & escuta ativa</li>
+              <li>Liderança empática &amp; escuta ativa</li>
               <li>Empresa pode subsidiar</li>
             </ul>
           </article>
 
           <article className="service">
-            <Image src="/psychology.svg" alt="Atendimento Psicológico" width={48} height={48} />
+            <Image src="/psychology.svg" alt="" width={48} height={48} aria-hidden />
             <h3>Atendimento Psicológico</h3>
             <ul>
               <li>Sessões a partir de R$ 65,00</li>
@@ -126,10 +144,8 @@ export default function HomeContent() {
           </article>
         </div>
 
-        <div className="services__ribbon">
-          <div className="ribbon__text">
-            Pronto para impulsionar o bem-estar do seu time?
-          </div>
+        <div className="services__ribbon container">
+          <div className="ribbon__text">Pronto para impulsionar o bem-estar do seu time?</div>
           <Link className="btn btn--brand btn--lg" href="https://wa.me/5588992347927" target="_blank">
             Falar com especialista
           </Link>
